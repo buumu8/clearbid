@@ -1,2 +1,30 @@
-# clearbid
-ClearBid: Transparent Government Procurement    AI agents check purchase quotes, compare prices and screen vendors for fraud. A human officer makes the final decision, and citizens can follow every step. 
+#ClearBid: Transparent Government Procurement 
+
+IBM SkillsBuild AI Experiential Learning Lab
+##Track: 
+
+Government & Public Services
+
+## Project summary:
+
+A multi-agent system that reviews vendor quotes for public purchases. It compares prices with the market and with past government purchases, flags fraud and collusion, and publishes plain-language reports. AI flags and explains; the human officer decides.
+
+## Target users:
+Primary: Procurement officers at city, state and federal agencies
+Secondary: Auditors and inspectors general
+Public: Citizens and journalists
+
+## Problem it solves
+- Manual price research is slow and inconsistent
+- Overpricing, bid rigging and shell companies waste public money
+- Citizens can't easily see how or why money was spent
+
+## Benefits
+- Officers check whether prices are reasonable in minutes instead of hours
+- Fraud is caught before the contract is awarded
+- Every decision has a written record that holds up in an audit
+- Public trust grows through open, readable reports
+
+
+
+
