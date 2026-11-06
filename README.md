@@ -1,4 +1,4 @@
-#ClearBid: Transparent Government Procurement 
+# ClearBid: Transparent Government Procurement 
 
 IBM SkillsBuild AI Experiential Learning Lab
 ##Track: 
