@@ -1,3 +1,5 @@
+import { fetchAgentReview } from './orchestrate.js';
+
 const MOCK_REVIEW = {
     summary: 'High risk: 1 overpriced quote, 2 possibly colluding vendors.',
     vendors: [
@@ -17,13 +19,27 @@ const MOCK_REVIEW = {
     ],
 };
 
+/** Map a purchase to the scenario ID the agent understands. */
+function resolveScenarioId(purchase) {
+    return purchase.scenarioId ?? 'laptops-50';
+}
+
 export async function runReview(purchase) {
     if (process.env.USE_MOCK_AGENTS === 'true') {
         await new Promise((r) => setTimeout(r, 1500)); // simulate agent time
-        return MOCK_REVIEW;
+        return { ...MOCK_REVIEW, source: 'mock' };
     }
-    // Later: call the watsonx Orchestrate supervisor agent here (server side only)
-    throw new Error('Live agent mode not set up yet');
+
+    const scenarioId = resolveScenarioId(purchase);
+    const result = await fetchAgentReview(scenarioId);
+
+    if (result) {
+        return { ...result, source: 'agent' };
+    }
+
+    // Both attempts failed — fall back to mock so the UI is never left hanging
+    console.warn(`[review] agent unavailable for scenario '${scenarioId}', using fallback`);
+    return { ...MOCK_REVIEW, source: 'fallback' };
 }
 
 // The same checks Orchestrate's tool will call. Pure code, no AI credits used.
