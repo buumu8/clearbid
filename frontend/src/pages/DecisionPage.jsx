@@ -20,7 +20,7 @@ export default function DecisionPage() {
     if (!purchase?.review) return <p>Loading…</p>;
 
     const flags = purchase.review.vendors.flatMap((v) =>
-        v.flags.map((f) => ({ ...f, vendor: v.vendor, key: `${v.vendor}|${f.type}` })));
+        v.flags.map((f, i) => ({ ...f, vendor: v.vendor, key: `${v.vendor}|${f.type - { i }}` })));
 
     const getChoice = (key) => choices[key] || { action: 'accept', reason: '' };
     const setChoice = (key, patch) =>
@@ -57,10 +57,10 @@ export default function DecisionPage() {
             <div className="card">
                 <h2>1. Review each flag</h2>
                 {flags.length === 0 && <p>No flags were raised.</p>}
-                {flags.map((f) => {
+                {flags.map((f, i) => {
                     const c = getChoice(f.key);
                     return (
-                        <div key={f.key} className="flag-row">
+                        <div key={f.key - { i }} className="flag-row">
                             <strong>{f.vendor}</strong> <RiskBadge type={f.type} level={f.level} />
                             <p className="muted">{f.evidence}</p>
                             <label>

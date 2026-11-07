@@ -40,14 +40,14 @@ export default function ReviewPage() {
                         <tr><th>Vendor</th><th>Unit price</th><th>Risk flags</th></tr>
                     </thead>
                     <tbody>
-                        {review.vendors.map((v) => (
+                        {review.vendors.map((v, i) => (
                             <tr key={v.vendor} onClick={() => setSelected(v)}
                                 className={selected?.vendor === v.vendor ? 'selected' : ''}>
                                 <td>{v.vendor}</td>
                                 <td>${v.unitPrice.toLocaleString()}</td>
                                 <td>
                                     {v.flags.length
-                                        ? v.flags.map((f) => <RiskBadge key={f.type} {...f} />)
+                                        ? v.flags.map((f) => <RiskBadge key={f.type - { i }} {...f} />)
                                         : <span className="badge badge-low">clear</span>}
                                 </td>
                             </tr>
@@ -61,8 +61,8 @@ export default function ReviewPage() {
                     {selected && selected.flags.length === 0 && <p>No issues found.</p>}
                     {selected && selected.flags.length > 0 && (
                         <ul>
-                            {selected.flags.map((f) => (
-                                <li key={f.type}><strong>{f.type}:</strong> {f.evidence}</li>
+                            {selected.flags.map((f, i) => (
+                                <li key={f.type - { i }}><strong>{f.type}:</strong> {f.evidence}</li>
                             ))}
                         </ul>
                     )}

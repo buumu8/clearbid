@@ -3,7 +3,7 @@
   "laptops-50": [
     {
       "vendor_id": "vendor-a",
-      "vendor": "Apex Federal Solutions LLC",
+      "vendor": "Northline Tech Partners",
       "item_description": "15-inch business laptop, Intel Core i7, 16GB RAM, 512GB SSD",
       "item_key": "laptop",
       "quantity": 50,
@@ -19,7 +19,7 @@
     },
     {
       "vendor_id": "vendor-c",
-      "vendor": "Vendor C Supplies LLC",
+      "vendor": "Apex Digital Solutions LLC",
       "item_description": "15-inch business laptop, Intel Core i7, 16GB RAM, 512GB SSD",
       "item_key": "laptop",
       "quantity": 50,
@@ -37,7 +37,7 @@
   "chairs-120": [
     {
       "vendor_id": "vendor-a",
-      "vendor": "Apex Federal Solutions LLC",
+      "vendor": "Northline Tech Partners",
       "item_description": "Ergonomic task chair, adjustable lumbar support, mesh back",
       "item_key": "chair",
       "quantity": 120,
@@ -63,7 +63,7 @@
   "toner-400": [
     {
       "vendor_id": "vendor-a",
-      "vendor": "Apex Federal Solutions LLC",
+      "vendor": "Northline Tech Partners",
       "item_description": "High-yield laser toner cartridge, black, 6000 page yield",
       "item_key": "toner",
       "quantity": 400,

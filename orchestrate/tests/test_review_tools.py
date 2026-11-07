@@ -4,7 +4,7 @@ Pytest tests for orchestrate/tools/review_tools.py.
 All tests call _run_quote_review (plain Python function) directly,
 bypassing the @tool ADK wrapper which would require the Orchestrate runtime.
 
-test_data_sync is the only test that opens data/*.json files — it asserts
+test_data_sync_* are the only tests that open data/*.json files — they assert
 the bundled _DATA copy inside the tool stays in sync with the canonical files.
 """
 
@@ -16,7 +16,7 @@ import sys
 _REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_REPO_ROOT / "orchestrate"))
 
-from tools.review_tools import _run_quote_review, _DATA  # noqa: E402
+from tools.review_tools import _run_quote_review, _DATA, _fuzzy_match, _normalize_name  # noqa: E402
 
 _DATA_DIR = _REPO_ROOT / "data"
 
@@ -47,11 +47,25 @@ def _flag_levels(flags: list) -> list:
 
 def test_laptops_vendor_a_has_high_price_flag():
     result = _run_quote_review("laptops-50")
-    flags = _flags_for(result, "Apex Federal Solutions LLC")
+    flags = _flags_for(result, "Northline Tech Partners")
     price_flags = [f for f in flags if f["type"] == "price"]
     assert price_flags, "Vendor A should have at least one price flag"
     assert any(f["level"] == "high" for f in price_flags), (
-        "Vendor A price flag should be 'high' (unit price >100% above median)"
+        "Vendor A price flag should be 'high' (unit price >100% above reference)"
+    )
+
+
+def test_laptops_vendor_a_price_evidence_mentions_both_references():
+    result = _run_quote_review("laptops-50")
+    flags = _flags_for(result, "Northline Tech Partners")
+    price_flags = [f for f in flags if f["type"] == "price"]
+    assert price_flags, "Vendor A should have a price flag"
+    evidence = price_flags[0]["evidence"]
+    assert "median past award" in evidence, (
+        f"Price evidence should mention 'median past award', got: {evidence}"
+    )
+    assert "market catalog" in evidence, (
+        f"Price evidence should mention 'market catalog', got: {evidence}"
     )
 
 
@@ -67,7 +81,7 @@ def test_laptops_vendor_b_has_high_collusion_flag():
 
 def test_laptops_vendor_c_has_high_collusion_and_medium_vendor_flags():
     result = _run_quote_review("laptops-50")
-    flags = _flags_for(result, "Vendor C Supplies LLC")
+    flags = _flags_for(result, "Apex Digital Solutions LLC")
     collusion_flags = [f for f in flags if f["type"] == "collusion"]
     vendor_flags = [f for f in flags if f["type"] == "vendor"]
     assert any(f["level"] == "high" for f in collusion_flags), (
@@ -79,14 +93,20 @@ def test_laptops_vendor_c_has_high_collusion_and_medium_vendor_flags():
     )
 
 
-def test_laptops_vendor_d_has_no_fraud_flags():
-    """Vendor D is clean of fraud signals (price, vendor exclusion, collusion).
-    A compliance/supervisor flag may fire because the line value exceeds $50k —
-    that is a process requirement, not a fraud indicator."""
+def test_laptops_vendor_d_has_zero_flags():
+    """Vendor D (Cornerstone Tech Group) must have no flags of any kind.
+    The $50k supervisor threshold is now a top-level field, not a vendor flag."""
     result = _run_quote_review("laptops-50")
     flags = _flags_for(result, "Cornerstone Tech Group")
-    fraud_flags = [f for f in flags if f["type"] in {"price", "vendor", "collusion"}]
-    assert fraud_flags == [], f"Vendor D should have no fraud flags, got: {fraud_flags}"
+    assert flags == [], f"Vendor D should have zero flags, got: {flags}"
+
+
+def test_laptops_requires_supervisor_approval_is_true():
+    """laptops-50 has line totals >= $50,000, so supervisor approval is required."""
+    result = _run_quote_review("laptops-50")
+    assert result["requires_supervisor_approval"] is True, (
+        "laptops-50 should require supervisor approval (line totals exceed $50,000)"
+    )
 
 
 def test_laptops_risk_level_is_high():
@@ -100,8 +120,12 @@ def test_laptops_result_has_correct_contract_shape():
     result = _run_quote_review("laptops-50")
     assert "summary" in result
     assert "vendors" in result
+    assert "purchase_flags" in result
+    assert "requires_supervisor_approval" in result
     assert "risk_level" in result
     assert isinstance(result["summary"], str) and result["summary"]
+    assert isinstance(result["purchase_flags"], list)
+    assert isinstance(result["requires_supervisor_approval"], bool)
     for v in result["vendors"]:
         assert "vendor" in v
         assert "unitPrice" in v
@@ -110,6 +134,13 @@ def test_laptops_result_has_correct_contract_shape():
             assert f["type"] in {"price", "vendor", "collusion", "compliance"}
             assert f["level"] in {"low", "medium", "high"}
             assert isinstance(f["evidence"], str) and f["evidence"]
+
+
+def test_laptops_summary_does_not_contain_scenario_id():
+    result = _run_quote_review("laptops-50")
+    assert "laptops-50" not in result["summary"], (
+        f"Summary should not contain the scenario ID, got: {result['summary']}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -122,6 +153,13 @@ def test_chairs_all_vendors_have_no_flags():
         assert v["flags"] == [], (
             f"Vendor '{v['vendor']}' should have no flags in chairs-120, got: {v['flags']}"
         )
+
+
+def test_chairs_purchase_flags_is_empty():
+    result = _run_quote_review("chairs-120")
+    assert result["purchase_flags"] == [], (
+        f"chairs-120 should have no purchase_flags, got: {result['purchase_flags']}"
+    )
 
 
 def test_chairs_risk_level_is_low():
@@ -182,6 +220,36 @@ def test_unknown_scenario_returns_error():
     result = _run_quote_review("nonexistent-999")
     assert "error" in result, f"Expected 'error' key for unknown scenario, got: {result}"
     assert "nonexistent-999" in result["error"]
+
+
+# ---------------------------------------------------------------------------
+# Exclusion list: only the intended vendor triggers the fuzzy match
+# ---------------------------------------------------------------------------
+
+def test_only_vendor_c_matches_exclusion_list():
+    """Apex Digital Solutions LLC should match Apex Digitel Solutions LLC.
+    No other vendor in any scenario should trigger the exclusion check."""
+    exclusions = _DATA["exclusions"]["excluded_vendors"]
+    threshold = _DATA["rules"]["fuzzy_match_threshold"]
+
+    # Collect all unique vendor names across all scenarios
+    all_vendors = {
+        q["vendor"]
+        for scenario in _DATA["quotes"].values()
+        if isinstance(scenario, list)
+        for q in scenario
+    }
+
+    matched = {
+        name: _fuzzy_match(name, exclusions, threshold)
+        for name in all_vendors
+        if _fuzzy_match(name, exclusions, threshold) is not None
+    }
+
+    assert set(matched.keys()) == {"Apex Digital Solutions LLC"}, (
+        f"Expected only 'Apex Digital Solutions LLC' to match the exclusions list, "
+        f"but these vendors matched: {matched}"
+    )
 
 
 # ---------------------------------------------------------------------------

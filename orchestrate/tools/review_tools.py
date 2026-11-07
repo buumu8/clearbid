@@ -6,6 +6,7 @@ No network or filesystem access is required at runtime — data is inlined below
 """
 
 import difflib
+import re
 import statistics
 from ibm_watsonx_orchestrate.agent_builder.tools import tool
 
@@ -19,7 +20,7 @@ _DATA = {
     "vendors": [
         {
             "id": "vendor-a",
-            "name": "Apex Federal Solutions LLC",
+            "name": "Northline Tech Partners",
             "address": "1200 Commerce Parkway, Suite 300, Arlington, VA 22201",
             "phone": "703-555-0142",
             "bank_routing": "021000021",
@@ -37,7 +38,7 @@ _DATA = {
         },
         {
             "id": "vendor-c",
-            "name": "Vendor C Supplies LLC",
+            "name": "Apex Digital Solutions LLC",
             "address": "47 Industrial Loop, Building B, Richmond, VA 23220",
             "phone": "804-555-0412",
             "bank_routing": "056073502",
@@ -59,7 +60,7 @@ _DATA = {
         "laptops-50": [
             {
                 "vendor_id": "vendor-a",
-                "vendor": "Apex Federal Solutions LLC",
+                "vendor": "Northline Tech Partners",
                 "item_description": "15-inch business laptop, Intel Core i7, 16GB RAM, 512GB SSD",
                 "item_key": "laptop",
                 "quantity": 50,
@@ -75,7 +76,7 @@ _DATA = {
             },
             {
                 "vendor_id": "vendor-c",
-                "vendor": "Vendor C Supplies LLC",
+                "vendor": "Apex Digital Solutions LLC",
                 "item_description": "15-inch business laptop, Intel Core i7, 16GB RAM, 512GB SSD",
                 "item_key": "laptop",
                 "quantity": 50,
@@ -93,7 +94,7 @@ _DATA = {
         "chairs-120": [
             {
                 "vendor_id": "vendor-a",
-                "vendor": "Apex Federal Solutions LLC",
+                "vendor": "Northline Tech Partners",
                 "item_description": "Ergonomic task chair, adjustable lumbar support, mesh back",
                 "item_key": "chair",
                 "quantity": 120,
@@ -119,7 +120,7 @@ _DATA = {
         "toner-400": [
             {
                 "vendor_id": "vendor-a",
-                "vendor": "Apex Federal Solutions LLC",
+                "vendor": "Northline Tech Partners",
                 "item_description": "High-yield laser toner cartridge, black, 6000 page yield",
                 "item_key": "toner",
                 "quantity": 400,
@@ -180,7 +181,7 @@ _DATA = {
     "exclusions": {
         "_note": "Excluded/debarred vendors list (synthetic). Contains deliberate near-match for Vendor C.",
         "excluded_vendors": [
-            "Vendore C Supplies LLC",
+            "Apex Digitel Solutions LLC",
             "FastBid Federal Group",
             "QuickQuote Gov Solutions",
             "Alliance Procurement Associates",
@@ -203,17 +204,32 @@ _DATA = {
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+_LEGAL_SUFFIX_RE = re.compile(
+    r"\b(llc|inc|corp|ltd|co|company|incorporated|limited|associates)\b",
+    re.IGNORECASE,
+)
+
+
+def _normalize_name(name: str) -> str:
+    """Lowercase, strip legal suffixes and punctuation for fuzzy comparison."""
+    name = name.lower()
+    name = _LEGAL_SUFFIX_RE.sub("", name)
+    name = re.sub(r"[^\w\s]", "", name)   # remove punctuation
+    name = re.sub(r"\s+", " ", name).strip()
+    return name
+
+
 def _median(prices: list) -> float:
     return statistics.median(prices)
 
 
 def _fuzzy_match(name: str, exclusions: list, threshold: float = 0.85) -> str | None:
-    """Return the best-matching exclusion entry if ratio >= threshold, else None."""
-    name_lower = name.lower()
+    """Return the best-matching exclusion entry if normalized ratio >= threshold, else None."""
+    norm_name = _normalize_name(name)
     best_ratio = 0.0
     best_match = None
     for entry in exclusions:
-        ratio = difflib.SequenceMatcher(None, name_lower, entry.lower()).ratio()
+        ratio = difflib.SequenceMatcher(None, norm_name, _normalize_name(entry)).ratio()
         if ratio >= threshold and ratio > best_ratio:
             best_ratio = ratio
             best_match = entry
@@ -221,7 +237,11 @@ def _fuzzy_match(name: str, exclusions: list, threshold: float = 0.85) -> str | 
 
 
 def _check_price(vendor_name: str, unit_price: float, item_key: str) -> list:
-    """Return price flags for a single vendor quote line."""
+    """Return price flags for a single vendor quote line.
+
+    Compares unit_price against max(median past award price, catalog price).
+    Evidence mentions both reference prices.
+    """
     rules = _DATA["rules"]
     medium_pct = rules["price_medium_pct"] / 100
     high_pct = rules["price_high_pct"] / 100
@@ -229,55 +249,27 @@ def _check_price(vendor_name: str, unit_price: float, item_key: str) -> list:
     awards = _DATA["past_awards"].get(item_key, [])
     catalog_price = _DATA["catalog"].get(item_key)
 
-    flags = []
+    if not awards and not catalog_price:
+        return []
 
-    # Compare vs median past awards
-    if awards:
-        median_price = _median([a["unit_price"] for a in awards])
-        pct_above_median = (unit_price - median_price) / median_price
-        if pct_above_median > high_pct:
-            flags.append({
-                "type": "price",
-                "level": "high",
-                "evidence": (
-                    f"Unit price ${unit_price:,.2f} is {pct_above_median:.0%} above the median "
-                    f"past government award price of ${median_price:,.2f} for this item."
-                ),
-            })
-        elif pct_above_median > medium_pct:
-            flags.append({
-                "type": "price",
-                "level": "medium",
-                "evidence": (
-                    f"Unit price ${unit_price:,.2f} is {pct_above_median:.0%} above the median "
-                    f"past government award price of ${median_price:,.2f} for this item."
-                ),
-            })
+    median_price = _median([a["unit_price"] for a in awards]) if awards else None
+    reference_price = max(p for p in [median_price, catalog_price] if p is not None)
 
-    # Compare vs catalog price (only flag if not already high from awards check)
-    if catalog_price:
-        pct_above_catalog = (unit_price - catalog_price) / catalog_price
-        existing_high = any(f["level"] == "high" for f in flags)
-        if pct_above_catalog > high_pct and not existing_high:
-            flags.append({
-                "type": "price",
-                "level": "high",
-                "evidence": (
-                    f"Unit price ${unit_price:,.2f} is {pct_above_catalog:.0%} above the market "
-                    f"catalog price of ${catalog_price:,.2f} for this item."
-                ),
-            })
-        elif pct_above_catalog > medium_pct and not flags:
-            flags.append({
-                "type": "price",
-                "level": "medium",
-                "evidence": (
-                    f"Unit price ${unit_price:,.2f} is {pct_above_catalog:.0%} above the market "
-                    f"catalog price of ${catalog_price:,.2f} for this item."
-                ),
-            })
+    pct_above = (unit_price - reference_price) / reference_price
+    if pct_above <= medium_pct:
+        return []
 
-    return flags
+    level = "high" if pct_above > high_pct else "medium"
+
+    median_part = f"median past award ${median_price:,.2f}" if median_price is not None else None
+    catalog_part = f"market catalog ${catalog_price:,.2f}" if catalog_price is not None else None
+    ref_parts = ", ".join(p for p in [median_part, catalog_part] if p)
+
+    evidence = (
+        f"Unit price ${unit_price:,.2f} is {pct_above:.0%} above the reference price "
+        f"(${reference_price:,.2f}); reference is the higher of {ref_parts}."
+    )
+    return [{"type": "price", "level": level, "evidence": evidence}]
 
 
 def _check_vendor(vendor_name: str) -> list:
@@ -358,7 +350,7 @@ def _check_collusion(scenario_quotes: list) -> dict:
                     "type": "collusion",
                     "level": "medium",
                     "evidence": (
-                        f"All bids in this scenario fall within {rules['collusion_spread_pct']}% "
+                        f"All bids fall within {rules['collusion_spread_pct']}% "
                         f"of each other (${min_price:,.2f} – ${max_price:,.2f}), "
                         f"which may indicate coordinated pricing."
                     ),
@@ -367,50 +359,38 @@ def _check_collusion(scenario_quotes: list) -> dict:
     return flags_by_vendor
 
 
-def _check_compliance(scenario_quotes: list, scenario_id: str) -> dict:
+def _check_compliance(scenario_quotes: list) -> tuple[list, bool]:
     """
-    Return a dict mapping vendor_name -> list of compliance flags.
+    Return (purchase_flags, requires_supervisor_approval).
 
-    Checks:
-    - Total scenario value >= $10,000 and fewer than 3 vendor quotes → high flag on all vendors.
-    - Any individual line item >= $50,000 → medium flag on that vendor.
+    purchase_flags: scenario-level compliance issues (e.g. too few quotes).
+    requires_supervisor_approval: True if any line item total >= $50,000.
     """
     rules = _DATA["rules"]
     quote_threshold = rules["quote_threshold"]
     supervisor_threshold = rules["supervisor_threshold"]
     quote_minimum = rules["quote_minimum"]
 
-    flags_by_vendor: dict = {q["vendor"]: [] for q in scenario_quotes}
-
+    purchase_flags = []
     total_value = sum(q["unit_price"] * q["quantity"] for q in scenario_quotes)
     num_vendors = len(scenario_quotes)
 
     if total_value >= quote_threshold and num_vendors < quote_minimum:
-        evidence = (
-            f"Scenario '{scenario_id}' has a total value of ${total_value:,.2f} "
-            f"(above the ${quote_threshold:,.0f} threshold) but only {num_vendors} "
-            f"vendor quote(s) were submitted; at least {quote_minimum} are required."
-        )
-        for q in scenario_quotes:
-            flags_by_vendor[q["vendor"]].append({
-                "type": "compliance",
-                "level": "high",
-                "evidence": evidence,
-            })
+        purchase_flags.append({
+            "type": "compliance",
+            "level": "high",
+            "evidence": (
+                f"Total quoted value is ${total_value:,.2f} "
+                f"(above the ${quote_threshold:,.0f} threshold) but only {num_vendors} "
+                f"vendor quote(s) were submitted; at least {quote_minimum} are required."
+            ),
+        })
 
-    for q in scenario_quotes:
-        line_value = q["unit_price"] * q["quantity"]
-        if line_value >= supervisor_threshold:
-            flags_by_vendor[q["vendor"]].append({
-                "type": "compliance",
-                "level": "medium",
-                "evidence": (
-                    f"Line item value ${line_value:,.2f} for '{q['vendor']}' meets or exceeds "
-                    f"the ${supervisor_threshold:,.0f} supervisor-approval threshold."
-                ),
-            })
-
-    return flags_by_vendor
+    requires_supervisor = any(
+        q["unit_price"] * q["quantity"] >= supervisor_threshold
+        for q in scenario_quotes
+    )
+    return purchase_flags, requires_supervisor
 
 
 # ---------------------------------------------------------------------------
@@ -427,8 +407,8 @@ def _run_quote_review(scenario_id: str) -> dict:
     Returns:
         A dict matching the ClearBid review output contract:
         {
-            "summary": str,           # one-sentence overview
-            "vendors": [              # one entry per vendor in the scenario
+            "summary": str,                        # plain-English overview (no scenario ID)
+            "vendors": [                           # one entry per vendor
                 {
                     "vendor": str,
                     "unitPrice": float,
@@ -441,7 +421,11 @@ def _run_quote_review(scenario_id: str) -> dict:
                     ]
                 }
             ],
-            "risk_level": "low|medium|high"  # highest flag level across all vendors
+            "purchase_flags": [                    # scenario-level compliance issues
+                {"type": "compliance", "level": str, "evidence": str}
+            ],
+            "requires_supervisor_approval": bool,  # true if any line >= $50,000
+            "risk_level": "low|medium|high"        # highest flag level across all checks
         }
         If scenario_id is unknown, returns {"error": str}.
     """
@@ -453,7 +437,7 @@ def _run_quote_review(scenario_id: str) -> dict:
 
     # Run all checks
     collusion_flags = _check_collusion(scenario_quotes)
-    compliance_flags = _check_compliance(scenario_quotes, scenario_id)
+    purchase_flags, requires_supervisor = _check_compliance(scenario_quotes)
 
     vendor_results = []
     for q in scenario_quotes:
@@ -461,15 +445,17 @@ def _run_quote_review(scenario_id: str) -> dict:
         flags.extend(_check_price(q["vendor"], q["unit_price"], q["item_key"]))
         flags.extend(_check_vendor(q["vendor"]))
         flags.extend(collusion_flags.get(q["vendor"], []))
-        flags.extend(compliance_flags.get(q["vendor"], []))
         vendor_results.append({
             "vendor": q["vendor"],
             "unitPrice": q["unit_price"],
             "flags": flags,
         })
 
-    # Compute risk_level from highest flag level across all vendors
-    all_levels = [f["level"] for vr in vendor_results for f in vr["flags"]]
+    # Compute risk_level from highest flag level across vendor flags and purchase_flags
+    all_levels = (
+        [f["level"] for vr in vendor_results for f in vr["flags"]]
+        + [f["level"] for f in purchase_flags]
+    )
     if "high" in all_levels:
         risk_level = "high"
     elif "medium" in all_levels:
@@ -477,21 +463,35 @@ def _run_quote_review(scenario_id: str) -> dict:
     else:
         risk_level = "low"
 
-    total_flags = sum(len(vr["flags"]) for vr in vendor_results)
+    total_vendor_flags = sum(len(vr["flags"]) for vr in vendor_results)
     flagged_vendors = [vr["vendor"] for vr in vendor_results if vr["flags"]]
+    item_desc = scenario_quotes[0]["item_description"].split(",")[0].lower()
 
-    if total_flags == 0:
-        summary = f"Scenario '{scenario_id}': all {len(scenario_quotes)} vendor quotes passed review with no flags."
-    else:
-        vendor_list = ", ".join(f"'{v}'" for v in flagged_vendors)
+    if total_vendor_flags == 0 and not purchase_flags:
         summary = (
-            f"Scenario '{scenario_id}': {total_flags} flag(s) found across "
-            f"{len(flagged_vendors)} vendor(s) ({vendor_list}); overall risk level is {risk_level}."
+            f"All {len(scenario_quotes)} vendor quotes for {item_desc} passed review "
+            f"with no flags."
+        )
+    else:
+        parts = []
+        if flagged_vendors:
+            vendor_list = ", ".join(f"'{v}'" for v in flagged_vendors)
+            parts.append(
+                f"{total_vendor_flags} flag(s) found across "
+                f"{len(flagged_vendors)} vendor(s) ({vendor_list})"
+            )
+        if purchase_flags:
+            parts.append(f"{len(purchase_flags)} purchase-level compliance issue(s)")
+        summary = (
+            "; ".join(parts)
+            + f"; overall risk level is {risk_level}."
         )
 
     return {
         "summary": summary,
         "vendors": vendor_results,
+        "purchase_flags": purchase_flags,
+        "requires_supervisor_approval": requires_supervisor,
         "risk_level": risk_level,
     }
 
@@ -506,7 +506,8 @@ def _run_quote_review(scenario_id: str) -> dict:
         "Run a deterministic compliance review for a ClearBid procurement scenario. "
         "Checks vendor prices against past government awards and market catalog, "
         "screens for vendor exclusions, detects collusion signals, and verifies compliance rules. "
-        "Returns a structured review result with per-vendor flags and an overall risk level."
+        "Returns a structured review result with per-vendor flags, purchase-level flags, "
+        "supervisor approval requirement, and an overall risk level."
     ),
 )
 def run_quote_review(scenario_id: str) -> dict:
@@ -517,7 +518,8 @@ def run_quote_review(scenario_id: str) -> dict:
         scenario_id: The scenario to review. Valid values: "laptops-50", "chairs-120", "toner-400".
 
     Returns:
-        A dict with keys: summary (str), vendors (list), risk_level (str).
+        A dict with keys: summary (str), vendors (list), purchase_flags (list),
+        requires_supervisor_approval (bool), risk_level (str).
         If the scenario_id is unknown, returns a dict with an "error" key.
     """
     return _run_quote_review(scenario_id)

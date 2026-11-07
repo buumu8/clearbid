@@ -8,7 +8,7 @@ Agentic AI assistant that reviews government vendor quotes before purchase. Agen
 
 - frontend/: React + Vite (done, written by me – do not modify unless asked)
 - backend/: Node.js + Express, in-memory store, mock mode via USE_MOCK_AGENTS (done)
-- orchestrate/: watsonx Orchestrate ADK (Python tools + agent YAML) – IN PROGRESS
+- orchestrate/: watsonx Orchestrate ADK (Python tools + agent YAML) – IN PROGRESS; model: groq/openai/gpt-oss-120b
 - data/: synthetic demo data
 
 ## Agents (keep to 3 total, credits are limited)

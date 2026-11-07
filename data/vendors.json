@@ -1,7 +1,7 @@
 [
   {
     "id": "vendor-a",
-    "name": "Apex Federal Solutions LLC",
+    "name": "Northline Tech Partners",
     "address": "1200 Commerce Parkway, Suite 300, Arlington, VA 22201",
     "phone": "703-555-0142",
     "bank_routing": "021000021",
@@ -19,7 +19,7 @@
   },
   {
     "id": "vendor-c",
-    "name": "Vendor C Supplies LLC",
+    "name": "Apex Digital Solutions LLC",
     "address": "47 Industrial Loop, Building B, Richmond, VA 23220",
     "phone": "804-555-0412",
     "bank_routing": "056073502",
