@@ -130,14 +130,36 @@ export default function DecisionPage() {
                 <h2>2. Select the vendor to award</h2>
                 {review.vendors.map((v) => {
                     const r = v.reviews;
+                    const isRecommended = bestChoice && bestChoice.vendor === v.vendor;
                     return (
-                        <label key={v.vendor} style={{ display: 'block', margin: '8px 0' }}>
-                            <input type="radio" name="vendor" checked={vendor === v.vendor}
-                                onChange={() => setVendor(v.vendor)} />{' '}
-                            <strong>{v.vendor}</strong>: ${v.unitPrice.toLocaleString()} per unit
-                            {r?.rating != null && (
-                                <span className="muted" style={{ marginLeft: 10, fontSize: 13 }}>
-                                    <Stars rating={r.rating} /> {r.rating}/5
+                        <label
+                            key={v.vendor}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '10px 12px',
+                                margin: '6px 0',
+                                borderRadius: '6px',
+                                border: '1px solid var(--border, #e2e8f0)',
+                                background: 'transparent'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <input type="radio" name="vendor" checked={vendor === v.vendor}
+                                    onChange={() => setVendor(v.vendor)} />
+                                <div>
+                                    <strong>{v.vendor}</strong>: ${v.unitPrice.toLocaleString()} per unit
+                                    {r?.rating != null && (
+                                        <span className="muted" style={{ marginLeft: 10, fontSize: 13 }}>
+                                            <Stars rating={r.rating} /> {r.rating}/5
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            {isRecommended && (
+                                <span className="tag tag-green" style={{ fontSize: '11px', padding: '2px 8px' }}>
+                                    ✓ Agent Recommended
                                 </span>
                             )}
                         </label>

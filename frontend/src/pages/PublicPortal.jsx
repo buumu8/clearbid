@@ -29,7 +29,6 @@ function Stars({ rating }) {
 }
 
 function Tags({ p }) {
-    const followedAI = !p.awardRemark || !p.aiRecommendation || p.aiRecommendation === p.awardedVendor;
     return (
         <div className="tags">
             <span className={`tag ${catClass(p.category)}`}>{p.category}</span>
@@ -44,12 +43,7 @@ function Tags({ p }) {
                 <span className="tag tag-green">No risks found</span>
             )}
             <span className="tag tag-green" title="A named officer made the final decision">✓ Officer approved</span>
-
-            {followedAI ? (
-                <span className="tag tag-green" title="Final award matched the AI agent's top recommendation">
-                    ✓ Followed AI recommendation
-                </span>
-            ) : (
+            {p.awardRemark && (
                 <span className="tag tag-amber" title="Officer deviated from AI recommendation — see justification">
                     ⚑ Officer override
                 </span>
@@ -104,7 +98,7 @@ function DetailModal({ p, onClose }) {
                             <strong><Stars rating={p.awardedVendorRating} /> {p.awardedVendorRating}/5</strong>
                         </div>
                     )}
-                    {p.aiRecommendation && (
+                    {overrideOccurred && (
                         <div className="fact">
                             <span>AI recommended</span>
                             <strong>{p.aiRecommendation}</strong>
@@ -113,15 +107,10 @@ function DetailModal({ p, onClose }) {
                 </div>
                 <h3>What happened</h3>
                 <p>{p.publicSummary}</p>
-                {overrideOccurred ? (
+                {overrideOccurred && (
                     <div style={{ marginTop: 12, padding: '12px 14px', background: 'var(--warn-soft)', borderRadius: 8, border: '1px solid #fde68a' }}>
-                        <strong style={{ fontSize: 13, color: 'var(--warn)' }}>Officer's override justification</strong>
+                        <strong style={{ fontSize: 13, color: 'var(--warn)' }}>Officer's justification</strong>
                         <p style={{ margin: '6px 0 0', fontSize: 14 }}>{p.awardRemark}</p>
-                    </div>
-                ) : (
-                    <div style={{ marginTop: 12, padding: '12px 14px', background: 'var(--ok-soft)', borderRadius: 8, border: '1px solid #bbf7d0' }}>
-                        <strong style={{ fontSize: 13, color: 'var(--ok)' }}>AI Alignment</strong>
-                        <p style={{ margin: '6px 0 0', fontSize: 14 }}>The officer's award decision successfully matched the AI agent's top recommendation with no risk overrides required.</p>
                     </div>
                 )}
                 <p className="muted small">Bank details and personal information are never published.</p>
@@ -187,13 +176,6 @@ export default function PublicPortal() {
                 ))}
             </div>
 
-            <div className="legend">
-                <span><span className="tag tag-amber">⚠ risks caught</span> Problems the AI flagged and an officer reviewed</span>
-                <span><span className="tag tag-green">✓ Officer approved</span> A person made the final decision</span>
-                <span><span className="tag tag-green">✓ Followed AI recommendation</span> Human choice matched AI suggestion</span>
-                <span><span className="tag tag-amber">⚑ Officer override</span> Officer deviated from AI recommendation — justification published</span>
-            </div>
-
             {loading && <p>Loading…</p>}
             {error && <p className="error">{error}</p>}
             {!loading && filtered.length === 0 && <p>No purchases published yet.</p>}
@@ -234,6 +216,12 @@ export default function PublicPortal() {
 
             <p className="muted small demo-note">Sample data shown for demonstration purposes.</p>
 
+
+            <div className="legend">
+                <span><span className="tag tag-amber">⚠ risks caught</span> Problems the AI flagged and an officer reviewed</span>
+                <span><span className="tag tag-green">✓ Officer approved</span> A person made the final decision</span>
+                <span><span className="tag tag-amber">⚑ Officer override</span> Officer deviated from AI recommendation — justification published</span>
+            </div>
             {open && <DetailModal p={open} onClose={() => setOpen(null)} />}
         </section>
     );
