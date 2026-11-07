@@ -131,7 +131,7 @@ def test_laptops_result_has_correct_contract_shape():
         assert "unitPrice" in v
         assert "flags" in v
         for f in v["flags"]:
-            assert f["type"] in {"price", "vendor", "collusion", "compliance"}
+            assert f["type"] in {"price", "vendor", "collusion", "compliance", "quality"}
             assert f["level"] in {"low", "medium", "high"}
             assert isinstance(f["evidence"], str) and f["evidence"]
 
@@ -196,12 +196,33 @@ def test_toner_price_flag_is_medium():
                 )
 
 
-def test_toner_no_collusion_no_vendor_no_compliance_flags():
+def test_toner_northline_has_quality_flag():
+    """Northline toner rating is 2.6 — between 2.5 and 3.0 → medium quality flag."""
+    result = _run_quote_review("toner-400")
+    flags = _flags_for(result, "Northline Tech Partners")
+    quality_flags = [f for f in flags if f["type"] == "quality"]
+    assert quality_flags, "Northline should have a quality flag on toner (rating 2.6)"
+    assert quality_flags[0]["level"] == "medium", (
+        f"Expected medium quality flag for Northline toner, got '{quality_flags[0]['level']}'"
+    )
+
+
+def test_toner_non_northline_vendors_have_no_quality_flags():
     result = _run_quote_review("toner-400")
     for v in result["vendors"]:
-        non_price = [f for f in v["flags"] if f["type"] != "price"]
-        assert non_price == [], (
-            f"Vendor '{v['vendor']}' in toner-400 should have no non-price flags, got: {non_price}"
+        if v["vendor"] == "Northline Tech Partners":
+            continue
+        non_price_non_quality = [
+            f for f in v["flags"] if f["type"] not in {"price", "quality"}
+        ]
+        assert non_price_non_quality == [], (
+            f"Vendor '{v['vendor']}' in toner-400 should have no collusion/vendor/compliance flags, "
+            f"got: {non_price_non_quality}"
+        )
+        quality_flags = [f for f in v["flags"] if f["type"] == "quality"]
+        assert quality_flags == [], (
+            f"Vendor '{v['vendor']}' in toner-400 should have no quality flags (rating >= 3.0), "
+            f"got: {quality_flags}"
         )
 
 
@@ -253,6 +274,42 @@ def test_only_vendor_c_matches_exclusion_list():
 
 
 # ---------------------------------------------------------------------------
+# Quality flags
+# ---------------------------------------------------------------------------
+
+def test_laptops_northline_has_high_quality_flag():
+    """Northline laptop rating is 2.1 — below 2.5 → high quality flag."""
+    result = _run_quote_review("laptops-50")
+    flags = _flags_for(result, "Northline Tech Partners")
+    quality_flags = [f for f in flags if f["type"] == "quality"]
+    assert quality_flags, "Northline should have a quality flag on laptops (rating 2.1)"
+    assert quality_flags[0]["level"] == "high", (
+        f"Expected high quality flag for Northline laptop, got '{quality_flags[0]['level']}'"
+    )
+
+
+def test_laptops_cornerstone_has_no_quality_flag():
+    """Cornerstone laptop rating is 4.7 — well above threshold, no quality flag."""
+    result = _run_quote_review("laptops-50")
+    flags = _flags_for(result, "Cornerstone Tech Group")
+    quality_flags = [f for f in flags if f["type"] == "quality"]
+    assert quality_flags == [], (
+        f"Cornerstone should have no quality flags (rating 4.7), got: {quality_flags}"
+    )
+
+
+def test_vendor_results_have_reviews_field():
+    """Every vendor entry in the result must have a reviews dict with rating, review_count, snippets."""
+    result = _run_quote_review("laptops-50")
+    for v in result["vendors"]:
+        assert "reviews" in v, f"Vendor '{v['vendor']}' missing 'reviews' field"
+        r = v["reviews"]
+        assert isinstance(r.get("rating"), float), f"reviews.rating should be a float for '{v['vendor']}'"
+        assert isinstance(r.get("review_count"), int), f"reviews.review_count should be an int"
+        assert isinstance(r.get("snippets"), list), f"reviews.snippets should be a list"
+
+
+# ---------------------------------------------------------------------------
 # Data sync: _DATA inside the tool must match data/*.json canonical files
 # ---------------------------------------------------------------------------
 
@@ -301,4 +358,12 @@ def test_data_sync_rules():
         canonical = json.load(f)
     assert _DATA["rules"] == canonical, (
         "Bundled _DATA['rules'] does not match data/rules.json — update one to match the other."
+    )
+
+
+def test_data_sync_reviews():
+    with open(_DATA_DIR / "reviews.json") as f:
+        canonical = json.load(f)
+    assert _DATA["reviews"] == canonical, (
+        "Bundled _DATA['reviews'] does not match data/reviews.json — update one to match the other."
     )

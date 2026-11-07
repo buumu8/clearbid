@@ -1,0 +1,93 @@
+{
+  "_note": "Synthetic mock user review metrics. Keyed by vendor_id/item_key. All data is for demonstration purposes only.",
+  "vendor-a/laptop": {
+    "rating": 2.1,
+    "review_count": 87,
+    "snippets": [
+      "Screen hinges broke within 3 months of deployment.",
+      "Battery life far below advertised specs.",
+      "Three units DOA out of the box."
+    ]
+  },
+  "vendor-b/laptop": {
+    "rating": 4.4,
+    "review_count": 312,
+    "snippets": [
+      "Excellent build quality, held up through heavy daily use.",
+      "Battery lasts a full work day without issues.",
+      "IT support found setup straightforward across the fleet."
+    ]
+  },
+  "vendor-c/laptop": {
+    "rating": 3.8,
+    "review_count": 156,
+    "snippets": [
+      "Solid performance for standard office workloads.",
+      "Minor driver issues resolved with firmware update.",
+      "Good value, no major complaints after six months."
+    ]
+  },
+  "vendor-d/laptop": {
+    "rating": 4.7,
+    "review_count": 428,
+    "snippets": [
+      "Best laptops we have purchased in five years.",
+      "Zero hardware failures across 50 units after one year.",
+      "Responsive vendor support when we needed it."
+    ]
+  },
+  "vendor-a/chair": {
+    "rating": 4.1,
+    "review_count": 204,
+    "snippets": [
+      "Comfortable for long work sessions, lumbar support works well.",
+      "Assembly instructions were clear and quick.",
+      "A few chairs had minor cosmetic scratches on delivery."
+    ]
+  },
+  "vendor-b/chair": {
+    "rating": 4.3,
+    "review_count": 318,
+    "snippets": [
+      "Staff reported noticeably less back pain after switch.",
+      "Mesh back stays cool in summer.",
+      "Durable after 18 months of daily use."
+    ]
+  },
+  "vendor-d/chair": {
+    "rating": 3.9,
+    "review_count": 141,
+    "snippets": [
+      "Decent quality for the price range.",
+      "Armrest height adjustment is a bit stiff.",
+      "Would purchase again for a budget refresh."
+    ]
+  },
+  "vendor-a/toner": {
+    "rating": 2.6,
+    "review_count": 93,
+    "snippets": [
+      "Cartridges leaked and damaged two printers.",
+      "Page yield well below the stated 6000 pages.",
+      "Inconsistent print quality across the batch."
+    ]
+  },
+  "vendor-b/toner": {
+    "rating": 4.1,
+    "review_count": 511,
+    "snippets": [
+      "Consistent print quality, no smearing or fading.",
+      "Full yield as advertised on every cartridge.",
+      "Easy to install, no printer errors."
+    ]
+  },
+  "vendor-d/toner": {
+    "rating": 4.3,
+    "review_count": 387,
+    "snippets": [
+      "Reliable output over hundreds of print jobs.",
+      "No compatibility issues with our fleet of printers.",
+      "Good value and consistent performance."
+    ]
+  }
+}

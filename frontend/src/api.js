@@ -16,7 +16,8 @@ export const api = {
     startReview: (id) => request(`/api/purchases/${id}/review`, { method: 'POST' }),
     submitDecisions: (id, decisions) =>
         request(`/api/purchases/${id}/decisions`, { method: 'POST', body: JSON.stringify({ decisions }) }),
-    award: (id, vendor) => request(`/api/purchases/${id}/award`, { method: 'POST', body: JSON.stringify({ vendor }) }),
+    award: (id, vendor, awardRemark = '', aiRecommendation = '') =>
+        request(`/api/purchases/${id}/award`, { method: 'POST', body: JSON.stringify({ vendor, awardRemark, aiRecommendation }) }),
     publish: (id, publicSummary) =>
         request(`/api/purchases/${id}/publish`, { method: 'POST', body: JSON.stringify({ publicSummary }) }),
     publicPurchases: () => request('/api/public/purchases'),

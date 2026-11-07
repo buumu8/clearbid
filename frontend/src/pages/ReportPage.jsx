@@ -9,24 +9,31 @@ function findWinner(p) {
 function draftMemo(p) {
     const winner = findWinner(p);
     const overrides = p.decisions.filter((d) => d.action === 'override');
-    return [
+    const lines = [
         `PRICE REASONABLENESS MEMO - ${p.id}`,
         `Purchase: ${p.title} (${p.quantity} units, ${p.category})`,
         `Quotes reviewed: ${p.review.vendors.length}`,
-        `Awarded to: ${p.awardedVendor} at ${winner?.unitPrice.toLocaleString()} per unit`,
+        `Awarded to: ${p.awardedVendor} at $${winner?.unitPrice.toLocaleString()} per unit`,
+        `AI recommendation: ${p.aiRecommendation || 'not recorded'}`,
         `AI review summary: ${p.review.summary}`,
         `Officer overrides: ${overrides.length
             ? overrides.map((d) => `${d.vendor} (${d.flagType}): ${d.reason}`).join('; ')
             : 'none'}`,
-    ].join('\n');
+    ];
+    if (p.awardRemark) lines.push(`Award justification: ${p.awardRemark}`);
+    return lines.join('\n');
 }
 
 function draftPublicSummary(p) {
     const winner = findWinner(p);
-    const total = winner ? `${(winner.unitPrice * p.quantity).toLocaleString()}` : 'an approved amount';
-    return `The city purchased ${p.quantity} units for "${p.title}" from ${p.awardedVendor} for ${total}. `
+    const total = winner ? `$${(winner.unitPrice * p.quantity).toLocaleString()}` : 'an approved amount';
+    let text = `The city purchased ${p.quantity} units for "${p.title}" from ${p.awardedVendor} for ${total}. `
         + `${p.review.vendors.length} quotes were compared against past government prices and checked for vendor risks. `
         + `A procurement officer reviewed the findings and made the final decision.`;
+    if (p.aiRecommendation && p.awardedVendor !== p.aiRecommendation && p.awardRemark) {
+        text += ` The procurement officer selected ${p.awardedVendor} over the AI-recommended ${p.aiRecommendation}. Justification: ${p.awardRemark}`;
+    }
+    return text;
 }
 
 export default function ReportPage() {

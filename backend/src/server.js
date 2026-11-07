@@ -40,6 +40,7 @@ app.post('/api/purchases/:id/review', (req, res, next) => {
             .then((review) => {
                 p.review = review;
                 moveStatus(p.id, 'analyzed', 'agent');
+                console.log(review)
             })
             .catch((err) => logEvent(p.id, 'system', 'review_failed', { error: err.message }));
     } catch (e) { next(e); }
@@ -63,7 +64,9 @@ app.post('/api/purchases/:id/award', (req, res, next) => {
     try {
         const p = moveStatus(req.params.id, 'awarded', 'officer');
         p.awardedVendor = req.body.vendor;
-        logEvent(p.id, 'officer', 'awarded', { vendor: req.body.vendor });
+        p.awardRemark = req.body.awardRemark ?? '';
+        p.aiRecommendation = req.body.aiRecommendation ?? '';
+        logEvent(p.id, 'officer', 'awarded', { vendor: req.body.vendor, aiRecommendation: p.aiRecommendation });
         res.json(p);
     } catch (e) { next(e); }
 });
@@ -83,18 +86,25 @@ app.get('/api/public/purchases', (req, res) => {
     const items = listPurchases((p) => p.status === 'published')
         .map((p) => {
             const winner = p.review?.vendors.find((v) => v.vendor === p.awardedVendor);
+            // Count only vendor-risk flags (not compliance) for accurate public display
+            const risksFlagged = p.review?.vendors.reduce(
+                (n, v) => n + v.flags.filter((f) => f.type !== 'compliance').length, 0
+            ) ?? 0;
             return {
                 id: p.id,
                 title: p.title,
                 category: p.category,
                 quantity: p.quantity,
                 awardedVendor: p.awardedVendor,
+                aiRecommendation: p.aiRecommendation ?? '',
+                awardRemark: p.awardRemark ?? '',
                 publicSummary: p.publicSummary,
                 publishedAt: p.publishedAt,
                 unitPrice: winner?.unitPrice ?? null,
                 totalAmount: winner ? winner.unitPrice * p.quantity : null,
+                awardedVendorRating: winner?.reviews?.rating ?? null,
                 quotesCompared: p.review?.vendors.length ?? 0,
-                risksFlagged: p.review?.vendors.reduce((n, v) => n + v.flags.length, 0) ?? 0,
+                risksFlagged,
             };
         })
         .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));

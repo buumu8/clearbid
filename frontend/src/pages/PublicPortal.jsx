@@ -21,6 +21,13 @@ function timeAgo(iso) {
 }
 const isNew = (iso) => iso && Date.now() - new Date(iso) < 7 * 86400000;
 
+/** Render filled/empty stars for a rating out of 5. */
+function Stars({ rating }) {
+    if (rating == null) return null;
+    const filled = Math.round(rating);
+    return <span title={`${rating}/5`}>{'★'.repeat(filled)}{'☆'.repeat(5 - filled)}</span>;
+}
+
 function Tags({ p }) {
     return (
         <div className="tags">
@@ -36,6 +43,11 @@ function Tags({ p }) {
                 <span className="tag tag-green">No risks found</span>
             )}
             <span className="tag tag-green" title="A named officer made the final decision">✓ Officer approved</span>
+            {p.awardRemark && (
+                <span className="tag tag-amber" title="Officer deviated from AI recommendation — see justification">
+                    ⚑ Officer override
+                </span>
+            )}
         </div>
     );
 }
@@ -50,6 +62,11 @@ function Thumb({ p, onOpen }) {
                 {isNew(p.publishedAt) && <span className="new-pill">NEW</span>}
             </div>
             <div className="thumb-amount">{money(p.totalAmount)}</div>
+            {p.awardedVendorRating != null && (
+                <p style={{ margin: '4px 0 6px', fontSize: 13, color: 'var(--muted)' }}>
+                    <Stars rating={p.awardedVendorRating} /> {p.awardedVendorRating}/5
+                </p>
+            )}
             <Tags p={p} />
             <p className="clamp">{p.publicSummary}</p>
             <div className="thumb-foot">
@@ -61,6 +78,7 @@ function Thumb({ p, onOpen }) {
 }
 
 function DetailModal({ p, onClose }) {
+    const overrideOccurred = p.awardRemark && p.aiRecommendation && p.aiRecommendation !== p.awardedVendor;
     return (
         <div className="modal-backdrop" onClick={onClose}>
             <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
@@ -73,10 +91,28 @@ function DetailModal({ p, onClose }) {
                     <div className="fact"><span>Total cost</span><strong>{money(p.totalAmount)}</strong></div>
                     <div className="fact"><span>Price per unit</span><strong>{money(p.unitPrice)}</strong></div>
                     <div className="fact"><span>Quantity</span><strong>{p.quantity}</strong></div>
-                    <div className="fact"><span>Vendor</span><strong>{p.awardedVendor}</strong></div>
+                    <div className="fact"><span>Awarded vendor</span><strong>{p.awardedVendor}</strong></div>
+                    {p.awardedVendorRating != null && (
+                        <div className="fact">
+                            <span>User rating</span>
+                            <strong><Stars rating={p.awardedVendorRating} /> {p.awardedVendorRating}/5</strong>
+                        </div>
+                    )}
+                    {overrideOccurred && (
+                        <div className="fact">
+                            <span>AI recommended</span>
+                            <strong>{p.aiRecommendation}</strong>
+                        </div>
+                    )}
                 </div>
                 <h3>What happened</h3>
                 <p>{p.publicSummary}</p>
+                {overrideOccurred && (
+                    <div style={{ marginTop: 12, padding: '12px 14px', background: 'var(--warn-soft)', borderRadius: 8, border: '1px solid #fde68a' }}>
+                        <strong style={{ fontSize: 13, color: 'var(--warn)' }}>Officer's justification</strong>
+                        <p style={{ margin: '6px 0 0', fontSize: 14 }}>{p.awardRemark}</p>
+                    </div>
+                )}
                 <p className="muted small">Bank details and personal information are never published.</p>
             </div>
         </div>
@@ -143,6 +179,7 @@ export default function PublicPortal() {
             <div className="legend">
                 <span><span className="tag tag-amber">⚠ risks caught</span> Problems the AI flagged and an officer reviewed</span>
                 <span><span className="tag tag-green">✓ Officer approved</span> A person made the final decision</span>
+                <span><span className="tag tag-amber">⚑ Officer override</span> Officer deviated from AI recommendation — justification published</span>
             </div>
 
             {loading && <p>Loading…</p>}
@@ -166,6 +203,9 @@ export default function PublicPortal() {
                         <div className="big">{money(featured.totalAmount)}</div>
                         <p>{featured.quantity} units × {money(featured.unitPrice)}</p>
                         <p>Vendor: <strong>{featured.awardedVendor}</strong></p>
+                        {featured.awardedVendorRating != null && (
+                            <p><Stars rating={featured.awardedVendorRating} /> {featured.awardedVendorRating}/5</p>
+                        )}
                         <p>{timeAgo(featured.publishedAt)}</p>
                     </div>
                 </article>

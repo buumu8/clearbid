@@ -1,20 +1,27 @@
 /**
  * orchestrate.js
  *
- * Calls the watsonx Orchestrate review agent via the chat completions API.
+ * Calls the watsonx Orchestrate review agent via the Runs API.
+ *
+ * Flow:
+ *   1. POST {WXO_INSTANCE_URL}/v1/orchestrate/runs  → { run_id, thread_id }
+ *   2. GET  {WXO_INSTANCE_URL}/v1/orchestrate/runs/{run_id}  (poll until completed)
+ *   3. GET  {WXO_INSTANCE_URL}/v1/orchestrate/threads/{thread_id}/messages  → last assistant message
  *
  * Environment variables required (live mode):
  *   WXO_API_KEY          – IBM Cloud API key (never logged)
  *   WXO_INSTANCE_URL     – e.g. https://<instance>.assistant.watson.cloud.ibm.com
- *   WXO_REVIEW_AGENT_ID  – agent ID from Orchestrate
+ *   WXO_REVIEW_AGENT_ID  – agent UUID from Orchestrate (not the name)
  *
  * Optional:
- *   DEBUG_WXO=true       – log the raw Orchestrate response once per call
+ *   DEBUG_WXO=true       – log the raw runs/messages response once per call
  */
 
 const IAM_TOKEN_URL = 'https://iam.cloud.ibm.com/identity/token';
-const REFRESH_BEFORE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+const REFRESH_BEFORE_EXPIRY_MS = 5 * 60 * 1000; // refresh 5 minutes before expiry
 const REQUEST_TIMEOUT_MS = 60_000;
+const RUN_POLL_INTERVAL_MS = 2_000;
+const RUN_MAX_WAIT_MS = 55_000; // leave 5 s headroom inside the 60 s timeout
 
 // In-memory IAM token cache (process-scoped, no persistence needed)
 let _iamCache = null; // { accessToken, expiresAt }
@@ -44,12 +51,10 @@ async function getIamToken() {
     });
 
     if (!res.ok) {
-        const text = await res.text().catch(() => '');
         throw new Error(`IAM token request failed: ${res.status} ${res.statusText}`);
     }
 
     const data = await res.json();
-    // IBM IAM returns expires_in in seconds
     _iamCache = {
         accessToken: data.access_token,
         expiresAt: now + (data.expires_in ?? 3600) * 1000,
@@ -71,24 +76,44 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_M
 }
 
 /**
+ * Build a base URL and auth headers for Orchestrate API calls.
+ */
+async function orchestrateRequest(path, options = {}) {
+    const instanceUrl = process.env.WXO_INSTANCE_URL?.replace(/\/$/, '');
+    if (!instanceUrl) throw new Error('WXO_INSTANCE_URL is not set');
+
+    const token = await getIamToken();
+    const url = `${instanceUrl}/v1/orchestrate${path}`;
+
+    const res = await fetchWithTimeout(url, {
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        ...options,
+    });
+
+    if (!res.ok) {
+        throw new Error(`Orchestrate ${options.method || 'GET'} ${path} failed: ${res.status} ${res.statusText}`);
+    }
+
+    return res.json();
+}
+
+/**
  * Extract the first JSON object from an arbitrary string.
  * Returns the parsed object, or null if none found.
  */
 function extractJson(text) {
     const start = text.indexOf('{');
     if (start === -1) return null;
-    // Walk forward tracking brace depth to find the matching closing brace
     let depth = 0;
     for (let i = start; i < text.length; i++) {
         if (text[i] === '{') depth++;
         else if (text[i] === '}') {
             depth--;
             if (depth === 0) {
-                try {
-                    return JSON.parse(text.slice(start, i + 1));
-                } catch {
-                    return null;
-                }
+                try { return JSON.parse(text.slice(start, i + 1)); } catch { return null; }
             }
         }
     }
@@ -97,8 +122,6 @@ function extractJson(text) {
 
 /**
  * Validate the extracted object against the review contract.
- * Returns true only if summary is a non-empty string and vendors is an array
- * where each element has vendor (string), unitPrice (number), and flags (array).
  */
 function validateReview(obj) {
     if (!obj || typeof obj !== 'object') return false;
@@ -113,46 +136,99 @@ function validateReview(obj) {
 }
 
 /**
+ * Extract the last assistant message text from a threads/messages response.
+ */
+function extractAssistantText(messagesData) {
+    const messages = Array.isArray(messagesData)
+        ? messagesData
+        : messagesData?.data ?? [];
+
+    // Walk in reverse to find the last assistant message
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const msg = messages[i];
+        if (msg?.role !== 'assistant') continue;
+
+        const content = msg.content;
+        if (typeof content === 'string') return content;
+
+        // Content can also be an array of content blocks
+        if (Array.isArray(content)) {
+            const parts = content
+                .map((c) => (typeof c === 'string' ? c : c?.text ?? ''))
+                .filter(Boolean);
+            if (parts.length) return parts.join('\n');
+        }
+    }
+    return null;
+}
+
+/**
  * Make a single attempt to call the Orchestrate agent.
- * Returns the raw assistant text on HTTP 200; throws on any error.
+ * Returns a validated review object on success; throws on any error.
  */
 async function callOrchestrate(scenarioId) {
-    const instanceUrl = process.env.WXO_INSTANCE_URL;
     const agentId = process.env.WXO_REVIEW_AGENT_ID;
-    if (!instanceUrl) throw new Error('WXO_INSTANCE_URL is not set');
     if (!agentId) throw new Error('WXO_REVIEW_AGENT_ID is not set');
 
-    const token = await getIamToken();
-    const url = `${instanceUrl}/v1/orchestrate/${agentId}/chat/completions`;
-
-    const res = await fetchWithTimeout(url, {
+    // Step 1: create a run
+    const runResponse = await orchestrateRequest('/runs', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
-            stream: false,
-            messages: [{ role: 'user', content: `Review scenario ${scenarioId}` }],
+            message: { role: 'user', content: `Review scenario ${scenarioId}` },
+            agent_id: agentId,
         }),
     });
 
-    if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        throw new Error(`Orchestrate request failed: ${res.status} ${res.statusText}`);
+    if (process.env.DEBUG_WXO === 'true') {
+        console.log('[DEBUG_WXO] create run response:', JSON.stringify(runResponse));
     }
 
-    const data = await res.json();
+    const runId = runResponse?.run_id;
+    const threadId = runResponse?.thread_id;
+    if (!runId) throw new Error('Orchestrate /runs response missing run_id');
+
+    // Step 2: poll for completion
+    const deadline = Date.now() + RUN_MAX_WAIT_MS;
+    let finalStatus = null;
+
+    while (Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, RUN_POLL_INTERVAL_MS));
+        const status = await orchestrateRequest(`/runs/${runId}`);
+
+        if (process.env.DEBUG_WXO === 'true') {
+            console.log('[DEBUG_WXO] run status:', JSON.stringify(status));
+        }
+
+        const state = status?.status?.toLowerCase();
+        if (state === 'completed') { finalStatus = status; break; }
+        if (state === 'failed' || state === 'cancelled') {
+            throw new Error(`Run ${runId} ended with status: ${state}`);
+        }
+    }
+
+    if (!finalStatus) throw new Error(`Run ${runId} did not complete within ${RUN_MAX_WAIT_MS / 1000}s`);
+
+    // Step 3: fetch thread messages to get the assistant reply
+    const resolvedThreadId = threadId ?? finalStatus?.thread_id;
+    if (!resolvedThreadId) throw new Error('No thread_id available to fetch messages');
+
+    const messagesData = await orchestrateRequest(`/threads/${resolvedThreadId}/messages`);
 
     if (process.env.DEBUG_WXO === 'true') {
-        console.log('[DEBUG_WXO] raw response:', JSON.stringify(data));
+        console.log('[DEBUG_WXO] thread messages:', JSON.stringify(messagesData));
     }
 
-    const text = data?.choices?.[0]?.message?.content;
-    if (typeof text !== 'string') {
-        throw new Error('Orchestrate response missing choices[0].message.content');
+    const text = extractAssistantText(messagesData);
+    if (!text) throw new Error('No assistant message found in thread');
+
+    const obj = extractJson(text);
+    if (!validateReview(obj)) {
+        throw new Error(
+            `Response did not pass contract validation. Preview: ${text?.slice(0, 200)}`,
+        );
     }
-    return text;
+
+    return obj;
 }
 
 /**
@@ -165,15 +241,7 @@ async function callOrchestrate(scenarioId) {
 export async function fetchAgentReview(scenarioId) {
     for (let attempt = 1; attempt <= 2; attempt++) {
         try {
-            const text = await callOrchestrate(scenarioId);
-            const obj = extractJson(text);
-            if (validateReview(obj)) {
-                return obj;
-            }
-            console.warn(
-                `[orchestrate] attempt ${attempt}: response did not pass contract validation`,
-                { scenarioId, preview: text?.slice(0, 200) },
-            );
+            return await callOrchestrate(scenarioId);
         } catch (err) {
             console.warn(`[orchestrate] attempt ${attempt} failed: ${err.message}`, { scenarioId });
         }

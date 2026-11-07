@@ -197,6 +197,101 @@ _DATA = {
         "supervisor_threshold": 50000,
         "collusion_spread_pct": 3,
         "fuzzy_match_threshold": 0.85,
+        "quality_medium_threshold": 3.0,
+        "quality_high_threshold": 2.5,
+    },
+    "reviews": {
+        "_note": "Synthetic mock user review metrics. Keyed by vendor_id/item_key. All data is for demonstration purposes only.",
+        "vendor-a/laptop": {
+            "rating": 2.1,
+            "review_count": 87,
+            "snippets": [
+                "Screen hinges broke within 3 months of deployment.",
+                "Battery life far below advertised specs.",
+                "Three units DOA out of the box.",
+            ],
+        },
+        "vendor-b/laptop": {
+            "rating": 4.4,
+            "review_count": 312,
+            "snippets": [
+                "Excellent build quality, held up through heavy daily use.",
+                "Battery lasts a full work day without issues.",
+                "IT support found setup straightforward across the fleet.",
+            ],
+        },
+        "vendor-c/laptop": {
+            "rating": 3.8,
+            "review_count": 156,
+            "snippets": [
+                "Solid performance for standard office workloads.",
+                "Minor driver issues resolved with firmware update.",
+                "Good value, no major complaints after six months.",
+            ],
+        },
+        "vendor-d/laptop": {
+            "rating": 4.7,
+            "review_count": 428,
+            "snippets": [
+                "Best laptops we have purchased in five years.",
+                "Zero hardware failures across 50 units after one year.",
+                "Responsive vendor support when we needed it.",
+            ],
+        },
+        "vendor-a/chair": {
+            "rating": 4.1,
+            "review_count": 204,
+            "snippets": [
+                "Comfortable for long work sessions, lumbar support works well.",
+                "Assembly instructions were clear and quick.",
+                "A few chairs had minor cosmetic scratches on delivery.",
+            ],
+        },
+        "vendor-b/chair": {
+            "rating": 4.3,
+            "review_count": 318,
+            "snippets": [
+                "Staff reported noticeably less back pain after switch.",
+                "Mesh back stays cool in summer.",
+                "Durable after 18 months of daily use.",
+            ],
+        },
+        "vendor-d/chair": {
+            "rating": 3.9,
+            "review_count": 141,
+            "snippets": [
+                "Decent quality for the price range.",
+                "Armrest height adjustment is a bit stiff.",
+                "Would purchase again for a budget refresh.",
+            ],
+        },
+        "vendor-a/toner": {
+            "rating": 2.6,
+            "review_count": 93,
+            "snippets": [
+                "Cartridges leaked and damaged two printers.",
+                "Page yield well below the stated 6000 pages.",
+                "Inconsistent print quality across the batch.",
+            ],
+        },
+        "vendor-b/toner": {
+            "rating": 4.1,
+            "review_count": 511,
+            "snippets": [
+                "Consistent print quality, no smearing or fading.",
+                "Full yield as advertised on every cartridge.",
+                "Easy to install, no printer errors.",
+            ],
+        },
+        "vendor-d/toner": {
+            "rating": 4.3,
+            "review_count": 387,
+            "snippets": [
+                "Reliable output over hundreds of print jobs.",
+                "No compatibility issues with our fleet of printers.",
+                "Good value and consistent performance.",
+            ],
+        },
     },
 }
 
@@ -359,6 +454,30 @@ def _check_collusion(scenario_quotes: list) -> dict:
     return flags_by_vendor
 
 
+def _check_quality(vendor_id: str, item_key: str) -> list:
+    """Return a quality flag if user satisfaction rating is below threshold."""
+    rules = _DATA["rules"]
+    review_key = f"{vendor_id}/{item_key}"
+    review_data = _DATA["reviews"].get(review_key)
+    if not review_data:
+        return []
+
+    rating = review_data["rating"]
+    high_threshold = rules["quality_high_threshold"]
+    medium_threshold = rules["quality_medium_threshold"]
+
+    if rating >= medium_threshold:
+        return []
+
+    level = "high" if rating < high_threshold else "medium"
+    worst_snippet = review_data["snippets"][0] if review_data["snippets"] else ""
+    evidence = (
+        f"User satisfaction rating is {rating}/5 based on {review_data['review_count']} reviews "
+        f"(threshold: {medium_threshold}/5). Buyer feedback: \"{worst_snippet}\""
+    )
+    return [{"type": "quality", "level": level, "evidence": evidence}]
+
+
 def _check_compliance(scenario_quotes: list) -> tuple[list, bool]:
     """
     Return (purchase_flags, requires_supervisor_approval).
@@ -414,7 +533,7 @@ def _run_quote_review(scenario_id: str) -> dict:
                     "unitPrice": float,
                     "flags": [
                         {
-                            "type": "price|vendor|collusion|compliance",
+                            "type": "price|vendor|collusion|compliance|quality",
                             "level": "low|medium|high",
                             "evidence": str
                         }
@@ -444,11 +563,20 @@ def _run_quote_review(scenario_id: str) -> dict:
         flags = []
         flags.extend(_check_price(q["vendor"], q["unit_price"], q["item_key"]))
         flags.extend(_check_vendor(q["vendor"]))
+        flags.extend(_check_quality(q["vendor_id"], q["item_key"]))
         flags.extend(collusion_flags.get(q["vendor"], []))
+        # Attach review data so the frontend can display ratings and snippets
+        review_key = f"{q['vendor_id']}/{q['item_key']}"
+        review_data = _DATA["reviews"].get(review_key, {})
         vendor_results.append({
             "vendor": q["vendor"],
             "unitPrice": q["unit_price"],
             "flags": flags,
+            "reviews": {
+                "rating": review_data.get("rating"),
+                "review_count": review_data.get("review_count"),
+                "snippets": review_data.get("snippets", []),
+            },
         })
 
     # Compute risk_level from highest flag level across vendor flags and purchase_flags
