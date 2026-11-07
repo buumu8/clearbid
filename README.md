@@ -37,11 +37,16 @@ Public: Citizens and journalists
 ## Workflow
 ![ClearBid Workflow](./documents/images/clearbid_workflow_v2.jpeg)
 
-## Tool
+## Tools and Technology
 - Frontend: ReactJS
 - Backend: express, NodeJS
 - Orchestration: IBM watsonx Orchestrate 
+    - to orchestrate AI agent(s)
 - IDE: IBM Bob
+    - to synthesize mock data
+    - to connect to IBM watsonx agent(s)
+    - to finish up the frontend and backend
+
 
 ## UI/UX
 ### Landing Page
