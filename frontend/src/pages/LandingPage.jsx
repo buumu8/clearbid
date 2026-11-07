@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { ChartIcon, ShieldIcon, DocIcon } from '../components/Icons.jsx';
 import { api } from '../api.js';
 
+import heroImg from '../assets/hero.svg'
+
 const STEPS = [
     { tag: 'Officer', title: 'Upload quotes', text: 'Enter the purchase details and upload the vendor quote PDFs.' },
     { tag: 'AI agents', title: 'Automated review', text: 'Agents compare prices with past government purchases and screen every vendor.' },
@@ -69,7 +71,7 @@ export default function LandingPage() {
                     </div>
                     <p className="muted">Built with IBM watsonx Orchestrate and IBM Bob</p>
                 </div>
-                <img src="/hero.svg" alt="ClearBid review dashboard with risk flags" className="hero-img" />
+                <img src={heroImg} alt="ClearBid review dashboard with risk flags" className="hero-img" />
             </section>
 
 

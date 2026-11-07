@@ -7,6 +7,9 @@ import PublicPortal from './pages/PublicPortal.jsx';
 
 import LandingPage from './pages/LandingPage.jsx';
 
+
+import logoImg from './assets/logo.svg'
+
 export default function App() {
   return (
     <div>
@@ -14,7 +17,7 @@ export default function App() {
 
         <Link to="/" className="brand">
 
-          <img src="/logo.svg" alt="" />
+          <img src={logoImg} alt="" />
 
           ClearBid
 

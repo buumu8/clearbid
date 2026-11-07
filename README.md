@@ -14,6 +14,10 @@ Government & Public Services
 
 A multi-agent system that reviews vendor quotes for public purchases. It compares prices with the market and with past government purchases, flags fraud and collusion, and publishes plain-language reports. AI flags and explains; the human officer decides.
 
+## Demo
+
+- [Static Demo](https://buumu8.github.io/clearbid)
+
 ## Target users:
 Primary: Procurement officers at city, state and federal agencies
 Secondary: Auditors and inspectors general
