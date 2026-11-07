@@ -1,0 +1,38 @@
+[
+  {
+    "id": "vendor-a",
+    "name": "Apex Federal Solutions LLC",
+    "address": "1200 Commerce Parkway, Suite 300, Arlington, VA 22201",
+    "phone": "703-555-0142",
+    "bank_routing": "021000021",
+    "bank_account": "887643210",
+    "registration_date": "2018-03-14"
+  },
+  {
+    "id": "vendor-b",
+    "name": "Bridgepoint Office Supplies Inc",
+    "address": "47 Industrial Loop, Building B, Richmond, VA 23220",
+    "phone": "804-555-0387",
+    "bank_routing": "056073502",
+    "bank_account": "334912087",
+    "registration_date": "2015-07-22"
+  },
+  {
+    "id": "vendor-c",
+    "name": "Vendor C Supplies LLC",
+    "address": "47 Industrial Loop, Building B, Richmond, VA 23220",
+    "phone": "804-555-0412",
+    "bank_routing": "056073502",
+    "bank_account": "334912087",
+    "registration_date": "2021-11-03"
+  },
+  {
+    "id": "vendor-d",
+    "name": "Cornerstone Tech Group",
+    "address": "8900 Sunrise Blvd, Suite 12, Bethesda, MD 20814",
+    "phone": "301-555-0271",
+    "bank_routing": "054001725",
+    "bank_account": "112038476",
+    "registration_date": "2012-05-30"
+  }
+]

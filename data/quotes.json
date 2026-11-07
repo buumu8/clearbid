@@ -1,0 +1,89 @@
+{
+  "_note": "All data is synthetic and for demonstration purposes only.",
+  "laptops-50": [
+    {
+      "vendor_id": "vendor-a",
+      "vendor": "Apex Federal Solutions LLC",
+      "item_description": "15-inch business laptop, Intel Core i7, 16GB RAM, 512GB SSD",
+      "item_key": "laptop",
+      "quantity": 50,
+      "unit_price": 3900.00
+    },
+    {
+      "vendor_id": "vendor-b",
+      "vendor": "Bridgepoint Office Supplies Inc",
+      "item_description": "15-inch business laptop, Intel Core i7, 16GB RAM, 512GB SSD",
+      "item_key": "laptop",
+      "quantity": 50,
+      "unit_price": 1180.00
+    },
+    {
+      "vendor_id": "vendor-c",
+      "vendor": "Vendor C Supplies LLC",
+      "item_description": "15-inch business laptop, Intel Core i7, 16GB RAM, 512GB SSD",
+      "item_key": "laptop",
+      "quantity": 50,
+      "unit_price": 1195.00
+    },
+    {
+      "vendor_id": "vendor-d",
+      "vendor": "Cornerstone Tech Group",
+      "item_description": "15-inch business laptop, Intel Core i7, 16GB RAM, 512GB SSD",
+      "item_key": "laptop",
+      "quantity": 50,
+      "unit_price": 1210.00
+    }
+  ],
+  "chairs-120": [
+    {
+      "vendor_id": "vendor-a",
+      "vendor": "Apex Federal Solutions LLC",
+      "item_description": "Ergonomic task chair, adjustable lumbar support, mesh back",
+      "item_key": "chair",
+      "quantity": 120,
+      "unit_price": 198.00
+    },
+    {
+      "vendor_id": "vendor-b",
+      "vendor": "Bridgepoint Office Supplies Inc",
+      "item_description": "Ergonomic task chair, adjustable lumbar support, mesh back",
+      "item_key": "chair",
+      "quantity": 120,
+      "unit_price": 205.00
+    },
+    {
+      "vendor_id": "vendor-d",
+      "vendor": "Cornerstone Tech Group",
+      "item_description": "Ergonomic task chair, adjustable lumbar support, mesh back",
+      "item_key": "chair",
+      "quantity": 120,
+      "unit_price": 215.00
+    }
+  ],
+  "toner-400": [
+    {
+      "vendor_id": "vendor-a",
+      "vendor": "Apex Federal Solutions LLC",
+      "item_description": "High-yield laser toner cartridge, black, 6000 page yield",
+      "item_key": "toner",
+      "quantity": 400,
+      "unit_price": 58.00
+    },
+    {
+      "vendor_id": "vendor-b",
+      "vendor": "Bridgepoint Office Supplies Inc",
+      "item_description": "High-yield laser toner cartridge, black, 6000 page yield",
+      "item_key": "toner",
+      "quantity": 400,
+      "unit_price": 40.00
+    },
+    {
+      "vendor_id": "vendor-d",
+      "vendor": "Cornerstone Tech Group",
+      "item_description": "High-yield laser toner cartridge, black, 6000 page yield",
+      "item_key": "toner",
+      "quantity": 400,
+      "unit_price": 41.00
+    }
+  ]
+}

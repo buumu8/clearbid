@@ -1,0 +1,180 @@
+{
+  "_note": "All data is synthetic. Modelled on USAspending.gov award record structure.",
+  "laptop": [
+    {
+      "award_id": "GS-35F-2024-001",
+      "awarding_agency": "Department of Homeland Security",
+      "vendor": "DataEdge Federal Partners",
+      "award_date": "2024-02-14",
+      "quantity": 200,
+      "unit_price": 1180.00,
+      "total_value": 236000.00
+    },
+    {
+      "award_id": "VA-797-2023-118",
+      "awarding_agency": "Department of Veterans Affairs",
+      "vendor": "FedTech Procurement Group",
+      "award_date": "2023-09-28",
+      "quantity": 75,
+      "unit_price": 1195.00,
+      "total_value": 89625.00
+    },
+    {
+      "award_id": "DOJ-FY24-0044",
+      "awarding_agency": "Department of Justice",
+      "vendor": "Capitol IT Solutions LLC",
+      "award_date": "2024-01-07",
+      "quantity": 150,
+      "unit_price": 1210.00,
+      "total_value": 181500.00
+    },
+    {
+      "award_id": "GSA-FY24-LAPTOP-22",
+      "awarding_agency": "General Services Administration",
+      "vendor": "NovaStar Federal LLC",
+      "award_date": "2024-04-19",
+      "quantity": 300,
+      "unit_price": 1220.00,
+      "total_value": 366000.00
+    },
+    {
+      "award_id": "HHS-FY23-IT-087",
+      "awarding_agency": "Department of Health and Human Services",
+      "vendor": "BlueRidge Tech Services",
+      "award_date": "2023-11-02",
+      "quantity": 50,
+      "unit_price": 1240.00,
+      "total_value": 62000.00
+    },
+    {
+      "award_id": "DOE-FY24-0031",
+      "awarding_agency": "Department of Energy",
+      "vendor": "Meridian Federal Supply",
+      "award_date": "2024-03-05",
+      "quantity": 100,
+      "unit_price": 1255.00,
+      "total_value": 125500.00
+    },
+    {
+      "award_id": "USDA-FY23-IT-199",
+      "awarding_agency": "Department of Agriculture",
+      "vendor": "Keystone Government Tech",
+      "award_date": "2023-07-18",
+      "quantity": 60,
+      "unit_price": 1270.00,
+      "total_value": 76200.00
+    }
+  ],
+  "chair": [
+    {
+      "award_id": "PBS-FY24-FURN-011",
+      "awarding_agency": "Public Buildings Service",
+      "vendor": "OfficePro Federal",
+      "award_date": "2024-01-22",
+      "quantity": 500,
+      "unit_price": 195.00,
+      "total_value": 97500.00
+    },
+    {
+      "award_id": "GSA-FY23-FURN-44",
+      "awarding_agency": "General Services Administration",
+      "vendor": "Capitol Furniture Group",
+      "award_date": "2023-06-30",
+      "quantity": 200,
+      "unit_price": 200.00,
+      "total_value": 40000.00
+    },
+    {
+      "award_id": "DOT-FY24-0077",
+      "awarding_agency": "Department of Transportation",
+      "vendor": "NovaStar Federal LLC",
+      "award_date": "2024-02-11",
+      "quantity": 120,
+      "unit_price": 205.00,
+      "total_value": 24600.00
+    },
+    {
+      "award_id": "DHS-FY23-FURN-09",
+      "awarding_agency": "Department of Homeland Security",
+      "vendor": "FedFurnish Solutions",
+      "award_date": "2023-09-14",
+      "quantity": 80,
+      "unit_price": 210.00,
+      "total_value": 16800.00
+    },
+    {
+      "award_id": "DOD-FY24-FURN-033",
+      "awarding_agency": "Department of Defense",
+      "vendor": "BlueRidge Office Supply",
+      "award_date": "2024-05-03",
+      "quantity": 350,
+      "unit_price": 215.00,
+      "total_value": 75250.00
+    },
+    {
+      "award_id": "VA-FY23-FURN-201",
+      "awarding_agency": "Department of Veterans Affairs",
+      "vendor": "Patriot Interiors LLC",
+      "award_date": "2023-04-27",
+      "quantity": 90,
+      "unit_price": 220.00,
+      "total_value": 19800.00
+    }
+  ],
+  "toner": [
+    {
+      "award_id": "GSA-FY24-SUPP-088",
+      "awarding_agency": "General Services Administration",
+      "vendor": "FedSupply Direct",
+      "award_date": "2024-03-17",
+      "quantity": 1000,
+      "unit_price": 38.00,
+      "total_value": 38000.00
+    },
+    {
+      "award_id": "EPA-FY23-SUPP-044",
+      "awarding_agency": "Environmental Protection Agency",
+      "vendor": "GreenOffice Federal",
+      "award_date": "2023-10-08",
+      "quantity": 500,
+      "unit_price": 39.50,
+      "total_value": 19750.00
+    },
+    {
+      "award_id": "DOJ-FY24-SUPP-017",
+      "awarding_agency": "Department of Justice",
+      "vendor": "Capitol IT Solutions LLC",
+      "award_date": "2024-01-29",
+      "quantity": 600,
+      "unit_price": 41.00,
+      "total_value": 24600.00
+    },
+    {
+      "award_id": "HHS-FY23-SUPP-112",
+      "awarding_agency": "Department of Health and Human Services",
+      "vendor": "Meridian Federal Supply",
+      "award_date": "2023-08-15",
+      "quantity": 800,
+      "unit_price": 42.00,
+      "total_value": 33600.00
+    },
+    {
+      "award_id": "DHS-FY24-SUPP-029",
+      "awarding_agency": "Department of Homeland Security",
+      "vendor": "DataEdge Federal Partners",
+      "award_date": "2024-04-02",
+      "quantity": 400,
+      "unit_price": 43.00,
+      "total_value": 17200.00
+    },
+    {
+      "award_id": "DOE-FY23-SUPP-066",
+      "awarding_agency": "Department of Energy",
+      "vendor": "Keystone Government Tech",
+      "award_date": "2023-12-11",
+      "quantity": 300,
+      "unit_price": 44.50,
+      "total_value": 13350.00
+    }
+  ]
+}
