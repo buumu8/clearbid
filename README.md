@@ -50,6 +50,9 @@ Public: Citizens and journalists
 ### New Purchase Request Page
 ![New Purchase Page](./documents/images/NewPurchaseRequest.png)
 
+### AI Agent Result Page
+![AI Agent Result Page](./documents/images/AgentResultPage.png)
+
 ### Decision Page
 ![Decision Page](./documents/images/DecisionPage.png)
 
