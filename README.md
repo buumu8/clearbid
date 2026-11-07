@@ -2,6 +2,8 @@
 
 IBM SkillsBuild AI Experiential Learning Lab
 
+![Banner](./frontend/public/logo-full.svg)
+
 ## Team: Void
 
 ## Track: 
@@ -28,6 +30,24 @@ Public: Citizens and journalists
 - Every decision has a written record that holds up in an audit
 - Public trust grows through open, readable reports
 
+## Workflow
+![ClearBid Workflow](./documents/images/clearbid_workflow_v2.jpeg)
 
+## Tool
+- Frontend: ReactJS
+- Backend: express, NodeJS
+- Orchestration: IBM watsonx Orchestrate 
+- IDE: IBM Bob
 
+## UI/UX
+### Landing Page
+![Landing Page](./documents/images/LandingPage.png)
 
+### New Purchase Request Page
+![New Purchase Page](./documents/images/NewPurchaseRequest.png)
+
+### Decision Page
+![Decision Page](./documents/images/DecisionPage.png)
+
+### Public Report Page
+![Public Report](./documents/images/PublicReviewScreen.png)
