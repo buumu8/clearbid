@@ -22,8 +22,8 @@ app.get('/api/health', (req, res) => res.json({ ok: true, mock: process.env.USE_
 
 // Officer: create purchase
 app.post('/api/purchases', (req, res) => {
-    const { title, category, quantity, quotes = [] } = req.body;
-    res.status(201).json(createPurchase({ title, category, quantity, quotes }));
+    const { title, category, quantity, quotes = [], scenarioId } = req.body;
+    res.status(201).json(createPurchase({ title, category, quantity, quotes, scenarioId }));
 });
 
 app.get('/api/purchases/:id', (req, res) => {
