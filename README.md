@@ -2,7 +2,7 @@
 
 IBM SkillsBuild AI Experiential Learning Lab
 
-![Banner](./frontend/public/logo-full.svg)
+![Banner](./frontend/src/assets/logo-full.svg)
 
 ## Team: Void
 
