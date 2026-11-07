@@ -1,7 +1,10 @@
 # ClearBid: Transparent Government Procurement 
 
 IBM SkillsBuild AI Experiential Learning Lab
-##Track: 
+
+## Author: Jettapol Tuetrakul
+
+## Track: 
 
 Government & Public Services
 
