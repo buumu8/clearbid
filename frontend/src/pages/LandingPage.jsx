@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChartIcon, ShieldIcon, DocIcon } from '../components/Icons.jsx';
+import { api } from '../api.js';
 
 const STEPS = [
     { tag: 'Officer', title: 'Upload quotes', text: 'Enter the purchase details and upload the vendor quote PDFs.' },
@@ -31,7 +33,25 @@ const SAFEGUARDS = [
     'Every step is recorded in an audit log.',
 ];
 
+const CATEGORY_CLASS = {
+    'IT Hardware': 'cat-blue',
+    'Office Supplies': 'cat-purple',
+    'Services': 'cat-teal',
+};
+const catClass = (c) => CATEGORY_CLASS[c] || 'cat-gray';
+
+const money = (n) =>
+    n == null ? '—' : n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
 export default function LandingPage() {
+    const [recentReports, setRecentReports] = useState([]);
+
+    useEffect(() => {
+        api.publicPurchases()
+            .then((items) => setRecentReports(items.slice(0, 3)))
+            .catch(() => setRecentReports([]));
+    }, []);
+
     return (
         <>
             {/* Hero */}
@@ -51,6 +71,8 @@ export default function LandingPage() {
                 </div>
                 <img src="/hero.svg" alt="ClearBid review dashboard with risk flags" className="hero-img" />
             </section>
+
+
 
             {/* How it works */}
             <section className="section">
@@ -87,6 +109,8 @@ export default function LandingPage() {
                 </div>
             </section>
 
+
+
             {/* Human in the loop */}
             <section className="section">
                 <div className="callout">
@@ -104,6 +128,62 @@ export default function LandingPage() {
                     </ul>
                 </div>
             </section>
+
+            {/* Live Public Report Preview (Interactive Zoom Cards) */}
+            {recentReports.length > 0 && (
+                <section className="section featured-section-bg">
+                    <div className="section-title">
+                        <h2>Latest public disclosures</h2>
+                        <p className="muted">Real-time sample data straight from the transparency portal.</p>
+                    </div>
+                    <div className="grid-3">
+                        {recentReports.map((p) => (
+                            <div
+                                key={p.id}
+                                className="card preview-card"
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'space-between',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    cursor: 'pointer',
+                                    borderTop: '4px solid var(--accent, #2563eb)'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-6px) scale(1.02)';
+                                    e.currentTarget.style.boxShadow = '0 12px 24px -8px rgba(0, 0, 0, 0.15)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0px) scale(1)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                }}
+                            >
+                                <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                        <span className={`tag ${catClass(p.category)}`}>{p.category}</span>
+                                        {p.risksFlagged > 0 && (
+                                            <span className="tag tag-amber" style={{ fontSize: '11px' }}>⚠ {p.risksFlagged} risk caught</span>
+                                        )}
+                                    </div>
+                                    <h3 style={{ fontSize: '18px', marginBottom: '8px', color: 'var(--text)' }}>{p.title}</h3>
+                                    <p className="muted" style={{ fontSize: '14px', lineHeight: '1.5', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                        {p.publicSummary}
+                                    </p>
+                                </div>
+                                <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div>
+                                        <span style={{ fontSize: '11px', display: 'block', color: 'var(--muted)' }}>Total Awarded</span>
+                                        <strong style={{ fontSize: '16px', color: 'var(--text)' }}>{money(p.totalAmount)}</strong>
+                                    </div>
+                                    <Link to="/public" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>Explore →</Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             {/* CTA */}
             <section className="cta">

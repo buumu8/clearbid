@@ -1085,3 +1085,26 @@ button.btn-light:hover {
     padding: 28px;
   }
 }
+
+/* Global card smooth lift and zoom hover effect */
+.card,
+.thumb,
+.featured {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover,
+.thumb:hover,
+.featured:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+}
+
+/* Distinct background section wrapper */
+.featured-section-bg {
+  background: linear-gradient(to bottom, var(--bg-subtle, #f8fafc), var(--bg, #ffffff));
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 60px 0;
+  margin: 40px 0;
+}
