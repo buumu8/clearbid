@@ -2,7 +2,7 @@
 
 IBM SkillsBuild AI Experiential Learning Lab
 
-## Author: Jettapol Tuetrakul
+## Team: Void
 
 ## Track: 
 
