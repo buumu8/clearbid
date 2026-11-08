@@ -16,7 +16,9 @@ An AI agent system that reviews vendor quotes for public purchases. It compares 
 
 ## Demo
 
-- [Static Demo](https://buumu8.github.io/clearbid)
+[Click to view a Static Demo](https://buumu8.github.io/clearbid)
+
+![Clearbid Demo](./documents/images/ClearBid_TonerDemo.gif)
 
 ## Target users:
 Primary: Procurement officers at city, state and federal agencies
