@@ -1,6 +1,6 @@
 # ClearBid: Transparent Government Procurement 
 
-IBM SkillsBuild AI Experiential Learning Lab
+Built for: IBM SkillsBuild AI Experiential Learning Lab
 
 ![Banner](./frontend/src/assets/logo-full.svg)
 
@@ -16,9 +16,9 @@ An AI agent system that reviews vendor quotes for public purchases. It compares 
 
 ## Demo
 
-[Click to view a Static Demo](https://buumu8.github.io/clearbid)
+<span style="font-size:24px">**[Click to view a Static Demo with seed data](https://buumu8.github.io/clearbid)**</span>
 
-![Clearbid Demo](./documents/images/ClearBid_TonerDemo.gif)
+<img src="./documents/images/ClearBid_TonerDemo.gif" alt="Clearbid Demo with AI agent generated results" width="100%">
 
 ## Target users:
 Primary: Procurement officers at city, state and federal agencies
