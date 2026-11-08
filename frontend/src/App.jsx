@@ -6,6 +6,7 @@ import ReportPage from './pages/ReportPage.jsx';
 import PublicPortal from './pages/PublicPortal.jsx';
 
 import LandingPage from './pages/LandingPage.jsx';
+import { IS_DEMO, api } from './api.js';
 
 
 import logoImg from './assets/logo.svg'
@@ -33,6 +34,12 @@ export default function App() {
 
       </header>
       <main className="container">
+        {IS_DEMO && (
+          <div className="warning" style={{ textAlign: 'center', borderRadius: 0, margin: 0 }}>
+            Static demo: AI review results are simulated in your browser.{' '}
+            <button className="btn-light" onClick={() => api.resetDemo()}>Reset demo</button>
+          </div>
+        )}
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/officer/new" element={<UploadPage />} />

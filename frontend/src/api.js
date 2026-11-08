@@ -1,3 +1,5 @@
+import { mockApi } from './demo/mockApi.js';
+
 const BASE = import.meta.env.VITE_API_URL || ''; // empty locally (uses the proxy)
 
 async function request(path, options = {}) {
@@ -9,7 +11,7 @@ async function request(path, options = {}) {
     return res.json();
 }
 
-export const api = {
+export const realApi = {
     health: () => request('/api/health'),
     createPurchase: (body) => request('/api/purchases', { method: 'POST', body: JSON.stringify(body) }),
     getPurchase: (id) => request(`/api/purchases/${id}`),
@@ -22,6 +24,9 @@ export const api = {
         request(`/api/purchases/${id}/publish`, { method: 'POST', body: JSON.stringify({ publicSummary }) }),
     publicPurchases: () => request('/api/public/purchases'),
 };
+
+export const IS_DEMO = import.meta.env.MODE === 'demo';
+export const api = IS_DEMO ? mockApi : realApi;
 
 // Poll until the agent review finishes
 export async function waitForReview(id, { interval = 2000, timeout = 90000 } = {}) {

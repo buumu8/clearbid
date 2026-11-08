@@ -6,10 +6,12 @@
   "homepage": "https://buumu8.github.io/clearbid/",
   "scripts": {
     "dev": "vite",
+    "dev:demo": "vite --mode demo",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "predeploy": "npm run build",
+    "build:demo": "vite build --mode demo",
+    "predeploy": "npm run build:demo",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
