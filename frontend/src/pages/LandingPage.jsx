@@ -195,7 +195,7 @@ export default function LandingPage() {
             </section>
 
             <footer className="footer">
-                ClearBid prototype · IBM Agentic AI Hackathon · Demo data is synthetic
+                ClearBid prototype · IBM SkillsBuild Experiential Learning Lab: Fall 2026 · Demo data is synthetic
             </footer>
         </>
     );
