@@ -43,8 +43,9 @@ Public: Citizens and journalists
 - Every decision has a written record that holds up in an audit
 - Public trust grows through open, readable reports
 
-## Workflow
-![ClearBid Workflow](./documents/images/clearbid_workflow_v3.jpeg)
+## Architecture Diagram
+![ClearBid Architecture Diagram](./documents/images/architecture_diagram_v3.jpeg)
+
 
 ## Tools and Technology
 - Frontend: ReactJS
@@ -56,6 +57,8 @@ Public: Citizens and journalists
     - to connect to IBM watsonx agent(s)
     - to finish up the frontend and backend
 
+## Workflow
+![ClearBid Workflow](./documents/images/clearbid_workflow_v3.jpeg)
 
 ## UI/UX
 ### Landing Page
@@ -64,11 +67,17 @@ Public: Citizens and journalists
 ### New Purchase Request Page
 ![New Purchase Page](./documents/images/NewPurchaseRequest.png)
 
-### AI Agent Result Page
+### AI Agent Result Page (Powered by IBM watsonx Orchestrate)
 ![AI Agent Result Page](./documents/images/AgentResultPage.png)
+
+### Review Assistant (Powered by IBM watsonx Orchestrate)
+![AI Agent Review Assistant](./documents/images/ReviewAssistant.png)
 
 ### Decision Page
 ![Decision Page](./documents/images/DecisionPage.png)
 
 ### Public Report Page
 ![Public Report](./documents/images/PublicReviewScreen.png)
+
+### Public Assistant (Powered by IBM watsonx Orchestrate)
+![Public Assistant](./documents/images/PublicAssistant.png)
