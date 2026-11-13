@@ -1201,3 +1201,114 @@ button.btn-light:hover {
   padding-top: 6px;
   border-top: 1px solid #fde68a;
 }
+
+.public-assistant {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1000;
+}
+
+.public-assistant-fab {
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 18px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px #0002;
+}
+
+.public-assistant-panel {
+  width: min(380px, calc(100vw - 32px));
+  margin-bottom: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 8px 32px #0003;
+}
+
+.public-assistant-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.public-assistant-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.public-assistant-panel select,
+.public-assistant-form input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px;
+  margin-bottom: 10px;
+}
+
+.public-assistant-messages {
+  max-height: 280px;
+  overflow-y: auto;
+  margin: 12px 0;
+}
+
+.public-chat-message {
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 8px;
+  background: #f3f4f6;
+}
+
+.public-chat-message p {
+  margin: 4px 0;
+  white-space: pre-wrap;
+}
+
+.public-assistant-form {
+  display: flex;
+  gap: 8px;
+}
+
+.public-assistant-form input {
+  margin: 0;
+}
+
+.public-assistant-form button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 100px;
+}
+
+.assistant-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  animation: assistant-spin 0.7s linear infinite;
+}
+
+.public-chat-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+@keyframes assistant-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-spinner {
+    animation-duration: 1.5s;
+  }
+}

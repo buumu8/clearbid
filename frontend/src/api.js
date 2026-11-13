@@ -38,6 +38,14 @@ export const realApi = {
     },
     assistant: (intent, context = {}) =>
         request('/api/assistant', { method: 'POST', body: JSON.stringify({ intent, ...context }) }),
+    publicAssistant: (purchaseId, question) =>
+        request('/api/public-assistant', {
+            method: 'POST',
+            body: JSON.stringify({ purchaseId, question }),
+        }),
+
+
+
 };
 
 export const IS_DEMO = import.meta.env.MODE === 'demo';

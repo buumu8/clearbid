@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
 import ReportHistory from '../components/ReportHistory.jsx';
+import PublicAssistant from '../components/PublicAssistant.jsx';
+
 
 const CATEGORY_CLASS = {
     'IT Hardware': 'cat-blue',
@@ -224,6 +226,8 @@ export default function PublicPortal() {
                 <span><span className="tag tag-green">✓ Officer approved</span> A person made the final decision</span>
                 <span><span className="tag tag-amber">⚑ Officer override</span> Officer deviated from AI recommendation — justification published</span>
             </div>
+            <PublicAssistant reports={items} />
+
             {open && <DetailModal p={open} onClose={() => setOpen(null)} />}
         </section>
     );

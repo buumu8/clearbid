@@ -9,6 +9,7 @@ import { runReview, runQuoteChecks } from './review.js';
 import { seedDemoData } from './seed.js';
 import { registerUploadRoutes } from './uploadQuote.js';
 import { registerAssistantRoute } from './assistant.js';
+import { registerPublicAssistantRoute } from './publicAssistant.js';
 
 
 
@@ -19,6 +20,9 @@ if (process.env.USE_MOCK_AGENTS === 'true') seedDemoData();
 
 app.use(cors({ origin: allowed }));
 app.use(express.json({ limit: '1mb' }));
+
+//Register Public Assistant Route
+registerPublicAssistantRoute(app);
 
 // Health
 app.get('/api/health', (req, res) => res.json({ ok: true, mock: process.env.USE_MOCK_AGENTS }));

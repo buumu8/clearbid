@@ -169,6 +169,7 @@ export function registerAssistantRoute(app) {
                 try {
                     message = await liveResponse(intent, purchase, context);
                     if (message) source = 'agent';
+                    console.log(message)
                 } catch (err) {
                     console.error('[assistant] Live Orchestrate call failed:', err.message);
                 }
