@@ -249,3 +249,83 @@ export async function fetchAgentReview(scenarioId) {
     return null;
 }
 
+/**
+ * Run a plain-text prompt through a watsonx Orchestrate agent.
+ * Returns the last assistant message after the run completes.
+ */
+export async function fetchAgentAssistant(prompt) {
+    const agentId =
+        process.env.WXO_ASSISTANT_AGENT_ID ||
+        process.env.WXO_REVIEW_AGENT_ID;
+
+    if (!agentId) {
+        throw new Error('WXO_ASSISTANT_AGENT_ID or WXO_REVIEW_AGENT_ID is not set');
+    }
+
+    if (typeof prompt !== 'string' || !prompt.trim()) {
+        throw new Error('Assistant prompt is empty');
+    }
+
+    // Create the run. orchestrateRequest adds /v1/orchestrate,
+    // so the path here must be /runs.
+    const runResponse = await orchestrateRequest('/runs', {
+        method: 'POST',
+        body: JSON.stringify({
+            message: { role: 'user', content: prompt },
+            agent_id: agentId,
+        }),
+    });
+
+    const runId = runResponse?.run_id;
+    const threadId = runResponse?.thread_id;
+
+    if (!runId) {
+        throw new Error('Orchestrate response missing run_id');
+    }
+
+    // Poll until the run completes.
+    const deadline = Date.now() + RUN_MAX_WAIT_MS;
+    let finalStatus = null;
+
+    while (Date.now() < deadline) {
+        await new Promise((resolve) =>
+            setTimeout(resolve, RUN_POLL_INTERVAL_MS)
+        );
+
+        const status = await orchestrateRequest(`/runs/${runId}`);
+        const state = status?.status?.toLowerCase();
+
+        if (state === 'completed') {
+            finalStatus = status;
+            break;
+        }
+
+        if (state === 'failed' || state === 'cancelled') {
+            throw new Error(`Assistant run ended with status: ${state}`);
+        }
+    }
+
+    if (!finalStatus) {
+        throw new Error(
+            `Assistant run did not complete within ${RUN_MAX_WAIT_MS / 1000}s`
+        );
+    }
+
+    const resolvedThreadId = threadId ?? finalStatus?.thread_id;
+
+    if (!resolvedThreadId) {
+        throw new Error('Orchestrate response missing thread_id');
+    }
+
+    const messagesData = await orchestrateRequest(
+        `/threads/${resolvedThreadId}/messages`
+    );
+
+    const text = extractAssistantText(messagesData);
+
+    if (!text) {
+        throw new Error('No assistant message found in Orchestrate thread');
+    }
+
+    return text;
+}

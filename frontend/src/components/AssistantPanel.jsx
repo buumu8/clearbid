@@ -31,14 +31,78 @@ function sourceLabel(source) {
     return 'ClearBid Assistant (Demo — not a live AI model)';
 }
 
+function AssistantContent({ message }) {
+    let data;
+
+    try {
+        data = JSON.parse(message);
+    } catch {
+        // Normal text response: display as text.
+        return <div className="assistant-content">{message}</div>;
+    }
+
+    // If it isn't the expected review result, show it as formatted JSON
+    // rather than assuming its structure.
+    if (!data || typeof data !== 'object' || !Array.isArray(data.vendors)) {
+        return (
+            <pre style={{ whiteSpace: 'pre-wrap', margin: 0, fontFamily: 'inherit', fontSize: 13 }}>
+                {JSON.stringify(data, null, 2)}
+            </pre>
+        );
+    }
+
+    return (
+        <div className="assistant-content">
+            {data.summary && <p><strong>Review summary:</strong> {data.summary}</p>}
+            {data.risk_level && <p><strong>Overall risk:</strong> {data.risk_level}</p>}
+
+            {typeof data.requires_supervisor_approval === 'boolean' && (
+                <p>
+                    <strong>Supervisor approval:</strong>{' '}
+                    {data.requires_supervisor_approval ? 'Required' : 'Not indicated'}
+                </p>
+            )}
+
+            <h4>Vendor findings</h4>
+            {data.vendors.map((vendor, index) => (
+                <section key={`${vendor.vendor}-${index}`} className="assistant-vendor">
+                    <strong>{vendor.vendor || 'Unnamed vendor'}</strong>
+                    {typeof vendor.unitPrice === 'number' && (
+                        <div>Unit price: ${vendor.unitPrice.toLocaleString()}</div>
+                    )}
+
+                    {vendor.flags?.length > 0 ? (
+                        <ul>
+                            {vendor.flags.map((flag, flagIndex) => (
+                                <li key={`${flag.type}-${flagIndex}`}>
+                                    <strong>
+                                        {flag.level ? `${flag.level} ` : ''}
+                                        {flag.type || 'Potential issue'}:
+                                    </strong>{' '}
+                                    {flag.evidence || 'No evidence detail provided.'}
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p>No flags listed for this vendor.</p>
+                    )}
+                </section>
+            ))}
+
+            <p className="assistant-disclaimer">
+                These are AI-generated review indicators, not findings of fraud or non-compliance.
+                An officer must verify the evidence and make the decision.
+            </p>
+        </div>
+    );
+}
+
 function Message({ msg }) {
     const isDemo = msg.source !== 'agent';
     return (
         <div className={`assistant-msg${isDemo ? ' assistant-msg--demo' : ''}`}>
             <div className="assistant-msg-label">{sourceLabel(msg.source)}</div>
-            <pre style={{ whiteSpace: 'pre-wrap', margin: 0, fontFamily: 'inherit', fontSize: 13 }}>
-                {msg.message}
-            </pre>
+            <AssistantContent message={msg.message} />
             {msg.disclaimer && (
                 <div className="assistant-disclaimer">{msg.disclaimer}</div>
             )}

@@ -24,11 +24,15 @@ const VALID_INTENTS = ['start_review', 'explain_flag', 'draft_summary'];
 
 /** Check whether watsonx Orchestrate is configured for live use. */
 function isLiveMode() {
+    const agentId =
+        process.env.WXO_ASSISTANT_AGENT_ID ||
+        process.env.WXO_REVIEW_AGENT_ID;
+
     return (
         process.env.USE_MOCK_AGENTS !== 'true' &&
-        process.env.WXO_API_KEY &&
-        process.env.WXO_INSTANCE_URL &&
-        process.env.WXO_REVIEW_AGENT_ID
+        Boolean(process.env.WXO_API_KEY) &&
+        Boolean(process.env.WXO_INSTANCE_URL) &&
+        Boolean(agentId)
     );
 }
 
@@ -91,39 +95,52 @@ function demoResponse(intent, purchase, context) {
 // ── Live watsonx Orchestrate path ─────────────────────────────────────────
 
 async function liveResponse(intent, purchase, context) {
-    // Import orchestrate helpers lazily to avoid startup cost when in mock mode.
-    const { orchestrateRequest } = await import('./orchestrate.js');
+    let prompt;
 
-    // Build a compact prompt for the existing review agent.
-    const prompt = (() => {
-        switch (intent) {
-            case 'start_review':
-                return `You are a procurement compliance assistant. The officer needs guidance to start reviewing procurement ${purchase?.id ?? 'unknown'} (${purchase?.title ?? ''}). Provide a brief, plain-English checklist of steps to review the agent-flagged results. Output only the checklist, no preamble.`;
-            case 'explain_flag':
-                return `You are a procurement compliance assistant. Explain in plain English what the following flag means and what the officer should do. Flag: type="${context.flagType}", vendor="${context.vendor}", evidence="${context.evidence}". Keep it under 4 sentences. Do not make a fraud finding.`;
-            case 'draft_summary':
-                return `You are a procurement compliance assistant. Draft a plain-language public summary for procurement ${purchase?.id}: ${purchase?.title}, awarded to ${purchase?.awardedVendor}. Keep it factual and under 80 words. The officer must review before publishing.`;
-            default:
-                return null;
-        }
-    })();
+    switch (intent) {
+        case 'start_review':
+            prompt = [
+                'You are ClearBid, a procurement review assistant.',
+                `The officer is reviewing procurement ${purchase?.id ?? 'unknown'}.`,
+                `Item: ${purchase?.title ?? 'not provided'}.`,
+                'Give a brief, plain-English checklist for reviewing the findings.',
+                'Do not make or recommend the final award decision.',
+            ].join(' ');
+            break;
 
-    if (!prompt) return null;
+        case 'explain_flag':
+            prompt = [
+                'You are ClearBid, a procurement review assistant.',
+                `Explain this flag in plain English: type="${context.flagType ?? 'unknown'}",`,
+                `vendor="${context.vendor ?? 'unknown'}",`,
+                `evidence="${context.evidence ?? 'not provided'}".`,
+                'Keep the explanation brief. Do not claim fraud or make a final decision.',
+                'Tell the officer what evidence to verify.',
+            ].join(' ');
+            break;
 
-    try {
-        const result = await orchestrateRequest('/v1/orchestrate/runs', {
-            method: 'POST',
-            body: JSON.stringify({ input: prompt }),
-        });
-        // Minimal extraction — take run_id for status polling if needed.
-        // For simplicity in this MVP, return the prompt result directly if available.
-        if (result?.output) return String(result.output);
-        return null;
-    } catch {
-        return null; // Fall through to demo response.
+        case 'draft_summary':
+            if (!purchase || purchase.status !== 'awarded') {
+                return 'A public summary can be drafted once a vendor has been awarded.';
+            }
+
+            prompt = [
+                'You are ClearBid, a procurement review assistant.',
+                `Draft a factual public summary for purchase ${purchase.id}.`,
+                `Item: ${purchase.title}.`,
+                `Awarded vendor: ${purchase.awardedVendor}.`,
+                'Keep it under 80 words. Do not include sensitive information.',
+                'The officer must review and approve the draft before publication.',
+            ].join(' ');
+            break;
+
+        default:
+            return null;
     }
-}
 
+    const { fetchAgentAssistant } = await import('./orchestrate.js');
+    return await fetchAgentAssistant(prompt);
+}
 // ── Route registration ────────────────────────────────────────────────────
 
 export function registerAssistantRoute(app) {
@@ -152,10 +169,11 @@ export function registerAssistantRoute(app) {
                 try {
                     message = await liveResponse(intent, purchase, context);
                     if (message) source = 'agent';
-                } catch {
-                    // Fall through to demo.
+                } catch (err) {
+                    console.error('[assistant] Live Orchestrate call failed:', err.message);
                 }
             }
+
 
             if (!message) {
                 message = demoResponse(intent, purchase, context);
