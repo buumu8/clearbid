@@ -71,8 +71,8 @@ export default function ReportPage() {
             </div>
 
             <div className="card">
-                <h2>Public summary (edit before publishing)</h2>
-                <textarea rows="5" value={summary} onChange={(e) => setSummary(e.target.value)} />
+                <h2>Public summary (non-editable)</h2>
+                <textarea disabled rows="5" value={summary} onChange={(e) => setSummary(e.target.value)} />
                 <p className="muted">Check that no bank details or personal information are included.</p>
             </div>
 
