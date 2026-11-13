@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import RiskBadge from '../components/RiskBadge.jsx';
 import { getBestChoice } from '../utils/recommendation.js';
+import AssistantPanel from '../components/AssistantPanel.jsx';
 
 /** Only surface real vendor-risk flags in the Accept/Override list. */
 const isVendorRisk = (f) => f.type !== 'compliance';
@@ -189,8 +190,10 @@ export default function DecisionPage() {
                 </div>
             )}
 
+            <AssistantPanel purchase={purchase} />
+
             {error && <p className="error">{error}</p>}
-            <button onClick={handleAward} disabled={saving}>
+            <button onClick={handleAward} disabled={saving} style={{ marginTop: 16 }}>
                 {saving ? 'Saving…' : 'Award contract'}
             </button>
         </section>

@@ -86,8 +86,30 @@ export const mockApi = {
     async publish(id, publicSummary) {
         await wait();
         const p = find(id);
-        Object.assign(p, { publicSummary, publishedAt: new Date().toISOString() });
-        move(p, 'published', 'officer');
+        const now = new Date().toISOString();
+
+        if (p.status === 'published') {
+            // Correction — retain previous version in history.
+            if (!p.publishHistory) p.publishHistory = [];
+            p.publishHistory.push({
+                version: p.publishVersion ?? 1,
+                publishedAt: p.publishedAt,
+                publicSummary: p.publicSummary,
+                auditRef: `demo-ref-v${p.publishVersion ?? 1}`,
+            });
+            p.publishVersion = (p.publishVersion ?? 1) + 1;
+            p.publicSummary = publicSummary;
+            p.publishedAt = now;
+        } else {
+            Object.assign(p, {
+                publicSummary,
+                publishedAt: now,
+                publishVersion: 1,
+                publishHistory: [],
+            });
+            move(p, 'published', 'officer');
+        }
+        save();
         return structuredClone(p);
     },
 
@@ -100,6 +122,38 @@ export const mockApi = {
     },
 
     async audit() { await wait(); return structuredClone(state.audit); },
+
+    async publicPurchaseHistory(id) {
+        await wait();
+        const p = state.purchases.find((x) => x.id === id && x.status === 'published');
+        if (!p) throw new Error('Not found or not published.');
+        return {
+            id: p.id,
+            publishVersion: p.publishVersion ?? 1,
+            publishedAt: p.publishedAt,
+            publicSummary: p.publicSummary,
+            publishHistory: (p.publishHistory || []).map((h) => ({
+                version: h.version,
+                publishedAt: h.publishedAt,
+                publicSummary: h.publicSummary,
+                auditRef: h.auditRef,
+            })),
+            note: 'Demo mode: history is stored in browser localStorage and resets with the demo.',
+        };
+    },
+
+    assistant(intent, context = {}) {
+        const demoResponses = {
+            start_review: 'Demo: To start a review, check that at least 3 quotes were compared, verify vendor registration dates, and look for any high-risk flags before proceeding.',
+            explain_flag: `Demo: The flag on "${context.vendor ?? 'this vendor'}" (${context.flagType ?? 'unknown'}) means: ${context.evidence ?? 'see evidence panel'}. Verify this independently before making a decision.`,
+            draft_summary: 'Demo: Here is a draft public summary. Review it carefully — remove any vendor bank details or personal information before publishing.',
+        };
+        return Promise.resolve({
+            source: 'demo',
+            message: demoResponses[intent] ?? 'Demo: Please select a valid intent.',
+            disclaimer: 'Demo response — not from a live AI model.',
+        });
+    },
 
     resetDemo() { localStorage.removeItem(KEY); window.location.reload(); },
 };

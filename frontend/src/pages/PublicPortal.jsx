@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
+import ReportHistory from '../components/ReportHistory.jsx';
 
 const CATEGORY_CLASS = {
     'IT Hardware': 'cat-blue',
@@ -114,6 +115,7 @@ function DetailModal({ p, onClose }) {
                     </div>
                 )}
                 <p className="muted small">Bank details and personal information are never published.</p>
+                <ReportHistory purchaseId={p.id} />
             </div>
         </div>
     );

@@ -1108,3 +1108,96 @@ button.btn-light:hover {
   padding: 60px 0;
   margin: 40px 0;
 }
+
+/* ── Report history panel ───────────────────────────────────────────────── */
+.history-panel {
+  margin-top: 4px;
+}
+
+.history-row {
+  font-size: 13px;
+}
+
+.hash-ref {
+  word-break: break-all;
+  color: var(--muted);
+}
+
+/* ── Assistant panel ────────────────────────────────────────────────────── */
+.assistant-panel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-top: 24px;
+  overflow: hidden;
+}
+
+.assistant-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--surface);
+  cursor: pointer;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  gap: 8px;
+}
+
+.assistant-panel-header:hover {
+  background: #eef2ff;
+}
+
+.assistant-body {
+  padding: 16px;
+  background: #fff;
+}
+
+.assistant-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.assistant-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.assistant-msg {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.assistant-msg--demo {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.assistant-msg-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.assistant-disclaimer {
+  font-size: 11px;
+  color: #92400e;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #fde68a;
+}

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { waitForReview } from '../api.js';
 import RiskBadge from '../components/RiskBadge.jsx';
 import { getBestChoice } from '../utils/recommendation.js';
+import AssistantPanel from '../components/AssistantPanel.jsx';
 
 /** Strip compliance flags — shown as a top-level notice on the Decision page instead. */
 const vendorFlags = (flags) => flags.filter((f) => f.type !== 'compliance');
@@ -133,7 +134,11 @@ export default function ReviewPage() {
                 </aside>
             </div>
 
-            <button onClick={() => navigate(`/officer/${id}/decide`)}>Continue to decision</button>
+            <AssistantPanel purchase={purchase} />
+
+            <button onClick={() => navigate(`/officer/${id}/decide`)} style={{ marginTop: 16 }}>
+                Continue to decision
+            </button>
         </section>
     );
 }

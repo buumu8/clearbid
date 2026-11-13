@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 const purchases = new Map();
 const auditLog = [];
 
@@ -10,8 +12,16 @@ const TRANSITIONS = {
     awarded: ['published'],    // human: approve publication
 };
 
+/** SHA-256 hex of an arbitrary string — used for the tamper-evident event chain. */
+export function hashString(str) {
+    return createHash('sha256').update(str).digest('hex');
+}
+
 export function logEvent(purchaseId, actor, action, details = {}) {
-    auditLog.push({ at: new Date().toISOString(), purchaseId, actor, action, details });
+    const prevHash = auditLog.length === 0
+        ? 'genesis'
+        : hashString(JSON.stringify(auditLog[auditLog.length - 1]));
+    auditLog.push({ at: new Date().toISOString(), purchaseId, actor, action, details, prevHash });
 }
 
 export function createPurchase(data) {
@@ -47,4 +57,27 @@ export function getAuditLog() {
 
 export function insertPurchase(p) {
     purchases.set(p.id, p);
+}
+
+/**
+ * Returns public-safe publish history for a purchase.
+ * Omits private quote documents and personal information.
+ */
+export function getPublicHistory(id) {
+    const p = purchases.get(id);
+    if (!p || p.status !== 'published') return null;
+    const history = (p.publishHistory || []).map((h) => ({
+        version: h.version,
+        publishedAt: h.publishedAt,
+        publicSummary: h.publicSummary,
+        auditRef: h.auditRef,
+    }));
+    return {
+        id: p.id,
+        publishVersion: p.publishVersion ?? 1,
+        publishedAt: p.publishedAt,
+        publicSummary: p.publicSummary,
+        publishHistory: history,
+        note: 'This record is tamper-evident but not immutable — an administrator with server access can modify the underlying store. History resets on server restart.',
+    };
 }

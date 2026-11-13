@@ -23,6 +23,21 @@ export const realApi = {
     publish: (id, publicSummary) =>
         request(`/api/purchases/${id}/publish`, { method: 'POST', body: JSON.stringify({ publicSummary }) }),
     publicPurchases: () => request('/api/public/purchases'),
+    publicPurchaseHistory: (id) => request(`/api/public/purchases/${id}/history`),
+    quoteChecks: (id) => request(`/api/purchases/${id}/quote-checks`),
+    /** Upload a single PDF file for a purchase. Returns check results. */
+    uploadQuote(purchaseId, file) {
+        const form = new FormData();
+        form.append('file', file);
+        return fetch(`${BASE}/api/purchases/${purchaseId}/upload-quote`, { method: 'POST', body: form })
+            .then(async (res) => {
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.error || res.statusText);
+                return json;
+            });
+    },
+    assistant: (intent, context = {}) =>
+        request('/api/assistant', { method: 'POST', body: JSON.stringify({ intent, ...context }) }),
 };
 
 export const IS_DEMO = import.meta.env.MODE === 'demo';

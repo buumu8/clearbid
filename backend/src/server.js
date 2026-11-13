@@ -3,9 +3,12 @@ import express from 'express';
 import cors from 'cors';
 import {
     createPurchase, getPurchase, listPurchases, moveStatus, logEvent, getAuditLog,
+    hashString, getPublicHistory,
 } from './store.js';
 import { runReview, runQuoteChecks } from './review.js';
 import { seedDemoData } from './seed.js';
+import { registerUploadRoutes } from './uploadQuote.js';
+import { registerAssistantRoute } from './assistant.js';
 
 
 
@@ -71,12 +74,48 @@ app.post('/api/purchases/:id/award', (req, res, next) => {
     } catch (e) { next(e); }
 });
 
-// Human checkpoint 3: approve publication
+// Human checkpoint 3: approve publication (or correction — creates a new version)
 app.post('/api/purchases/:id/publish', (req, res, next) => {
     try {
-        const p = moveStatus(req.params.id, 'published', 'officer');
-        p.publicSummary = req.body.publicSummary;
-        p.publishedAt = new Date().toISOString(); // add this
+        const p = getPurchase(req.params.id);
+        if (!p) return res.status(404).json({ error: 'Not found' });
+
+        const newSummary = req.body.publicSummary;
+        const now = new Date().toISOString();
+
+        if (p.status === 'published') {
+            // Correction: retain current version in history, increment version.
+            const prevAuditEntry = getAuditLog().filter((e) => e.purchaseId === p.id).at(-1);
+            const prevAuditRef = prevAuditEntry ? hashString(JSON.stringify(prevAuditEntry)) : 'none';
+
+            const historyEntry = {
+                version: p.publishVersion ?? 1,
+                publishedAt: p.publishedAt,
+                publicSummary: p.publicSummary,
+                summaryHash: hashString(p.publicSummary ?? ''),
+                auditRef: prevAuditRef,
+            };
+            if (!p.publishHistory) p.publishHistory = [];
+            p.publishHistory.push(historyEntry);
+            p.publishVersion = (p.publishVersion ?? 1) + 1;
+            p.publicSummary = newSummary;
+            p.publishedAt = now;
+            logEvent(p.id, 'officer', 'report_corrected', {
+                version: p.publishVersion,
+                summaryHash: hashString(newSummary ?? ''),
+                prevAuditRef,
+            });
+        } else {
+            moveStatus(req.params.id, 'published', 'officer');
+            p.publicSummary = newSummary;
+            p.publishedAt = now;
+            p.publishVersion = 1;
+            p.publishHistory = [];
+            logEvent(p.id, 'officer', 'report_published', {
+                version: 1,
+                summaryHash: hashString(newSummary ?? ''),
+            });
+        }
         res.json(p);
     } catch (e) { next(e); }
 });
@@ -112,6 +151,26 @@ app.get('/api/public/purchases', (req, res) => {
 });
 
 app.get('/api/audit', (req, res) => res.json(getAuditLog()));
+
+// Officer: versioned report history (all versions)
+app.get('/api/purchases/:id/history', (req, res) => {
+    const history = getPublicHistory(req.params.id);
+    if (!history) return res.status(404).json({ error: 'Not found or not published.' });
+    res.json(history);
+});
+
+// Public: versioned report history (same data, public-safe)
+app.get('/api/public/purchases/:id/history', (req, res) => {
+    const history = getPublicHistory(req.params.id);
+    if (!history) return res.status(404).json({ error: 'Not found or not published.' });
+    res.json(history);
+});
+
+// Quote upload and check routes
+registerUploadRoutes(app);
+
+// ClearBid Assistant
+registerAssistantRoute(app);
 
 // Tool endpoint for watsonx Orchestrate (server to server, protected by an API key)
 app.post('/tools/run-quote-review', (req, res) => {
