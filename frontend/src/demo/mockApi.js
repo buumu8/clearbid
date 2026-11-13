@@ -155,5 +155,48 @@ export const mockApi = {
         });
     },
 
+    publicAssistant(purchaseId, question, report) {
+
+        const text = question.toLowerCase();
+
+        let message;
+
+
+        if (/\b(risk|risks|flag|flags|suspicious|concern|issue)\b/.test(text)) {
+
+            const count = Number(report?.risksFlagged) || 0;
+
+
+            message = count > 0
+
+                ? `This published report lists ${count} risk flag${count === 1 ? '' : 's'} for officer review. The public report does not include enough detail to assess them further. A flag is not a finding of wrongdoing.`
+
+                : 'This published report lists no risks flagged. That does not guarantee that no issues exist.';
+
+        } else {
+
+            message = report?.publicSummary
+
+                ? `Published summary: ${report.publicSummary}`
+
+                : 'This published report does not include a public summary.';
+
+        }
+
+
+        return Promise.resolve({
+
+            source: 'demo',
+
+            purchaseId,
+
+            message,
+
+            disclaimer: 'Demo response based only on information shown in the public report.',
+
+        });
+
+    },
+
     resetDemo() { localStorage.removeItem(KEY); window.location.reload(); },
 };
