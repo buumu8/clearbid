@@ -18,7 +18,7 @@ An AI agent system that reviews vendor quotes for public purchases. It compares 
 
 <span style="font-size:24px">**[Click to view a Static Demo with seed data](https://buumu8.github.io/clearbid)**</span>
 
-<img src="./documents/images/ClearBid_TonerDemo.gif" alt="Clearbid Demo with AI agent generated results" width="100%">
+<img src="./documents/images/ScreenRecord_v2.gif" alt="Clearbid Demo with AI agent generated results" width="100%">
 
 ## Final Presentation
 
