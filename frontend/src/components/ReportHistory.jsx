@@ -93,9 +93,9 @@ export default function ReportHistory({ purchaseId }) {
                                 <p className="muted" style={{ fontSize: 12 }}>No earlier versions.</p>
                             )}
 
-                            <p className="muted" style={{ fontSize: 11, marginTop: 10, padding: '8px 0', borderTop: '1px solid var(--border)' }}>
+                            {/* <p className="muted" style={{ fontSize: 11, marginTop: 10, padding: '8px 0', borderTop: '1px solid var(--border)' }}>
                                 {history.note}
-                            </p>
+                            </p> */}
                         </>
                     )}
                     {!loading && !error && !history && (

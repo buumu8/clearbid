@@ -45,6 +45,7 @@ export default function UploadPage() {
     function handleFiles(e) {
         const selected = [...e.target.files];
         setFiles(selected);
+        setQuoteChecks([]);
         const inferred = inferScenario(selected);
         if (inferred && inferred !== scenarioId) {
             setScenarioId(inferred);
